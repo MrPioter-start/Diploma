@@ -1,0 +1,87 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Werehouse\\Werehouse\\Kursach\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|d:\\werehouse\\werehouse\\kursach\\diploma\\main_windows\\orders\\orderswindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|solutionrelative:diploma\\main_windows\\orders\\orderswindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|d:\\werehouse\\werehouse\\kursach\\diploma\\database\\queries.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|solutionrelative:diploma\\database\\queries.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|d:\\werehouse\\werehouse\\kursach\\diploma\\main_windows\\orders\\orderstatuses.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|solutionrelative:diploma\\main_windows\\orders\\orderstatuses.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|d:\\werehouse\\werehouse\\kursach\\diploma\\main_windows\\orders\\orderswindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|solutionrelative:diploma\\main_windows\\orders\\orderswindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 233,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "OrdersWindow.xaml",
+              "DocumentMoniker": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\Orders\\OrdersWindow.xaml",
+              "RelativeDocumentMoniker": "Diploma\\main_windows\\Orders\\OrdersWindow.xaml",
+              "ToolTip": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\Orders\\OrdersWindow.xaml",
+              "RelativeToolTip": "Diploma\\main_windows\\Orders\\OrdersWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-05-01T22:47:34.605Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "OrderStatuses.cs",
+              "DocumentMoniker": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\Orders\\OrderStatuses.cs",
+              "RelativeDocumentMoniker": "Diploma\\main_windows\\Orders\\OrderStatuses.cs",
+              "ToolTip": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\Orders\\OrderStatuses.cs",
+              "RelativeToolTip": "Diploma\\main_windows\\Orders\\OrderStatuses.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-01T22:37:58.047Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Queries.cs",
+              "DocumentMoniker": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\Database\\Queries.cs",
+              "RelativeDocumentMoniker": "Diploma\\Database\\Queries.cs",
+              "ToolTip": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\Database\\Queries.cs",
+              "RelativeToolTip": "Diploma\\Database\\Queries.cs",
+              "ViewState": "AgIAAPIAAAAAAAAAAAAAABQBAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-01T20:22:59.597Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "OrdersWindow.xaml.cs",
+              "DocumentMoniker": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\Orders\\OrdersWindow.xaml.cs",
+              "RelativeDocumentMoniker": "Diploma\\main_windows\\Orders\\OrdersWindow.xaml.cs",
+              "ToolTip": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\Orders\\OrdersWindow.xaml.cs",
+              "RelativeToolTip": "Diploma\\main_windows\\Orders\\OrdersWindow.xaml.cs",
+              "ViewState": "AgIAADAAAAAAAAAAAAAgwEgAAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-01T21:19:29.927Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

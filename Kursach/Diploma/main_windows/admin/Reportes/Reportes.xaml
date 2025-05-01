@@ -1,0 +1,94 @@
+﻿<Window x:Class="Diploma.main_windows.admin.Reportes.Reportes"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Формирование отчетов" Height="600" Width="800"
+        Background="#FF2D2D30" Foreground="White"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <!-- Основной контейнер -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Панель выбора параметров -->
+            <RowDefinition Height="*"/>
+            <!-- DataGrid -->
+            <RowDefinition Height="Auto"/>
+            <!-- Кнопки экспорта -->
+        </Grid.RowDefinitions>
+
+        <!-- Панель выбора параметров -->
+        <StackPanel Grid.Row="0" Margin="20" Orientation="Vertical">
+            <TextBlock Text="Выберите период:" FontSize="16" Margin="0,0,0,10"/>
+            <DatePicker x:Name="StartDatePicker" 
+                        Background="#FF4D4D4D" Foreground="Black" BorderBrush="#FF555555" 
+                        Margin="0,0,0,10"/>
+            <DatePicker x:Name="EndDatePicker" 
+                        Background="#FF4D4D4D" Foreground="Black" BorderBrush="#FF555555" 
+                        Margin="0,0,0,10"/>
+
+            <TextBlock Text="Тип отчета:" FontSize="16" Margin="0,0,0,10"/>
+            <ComboBox x:Name="ReportTypeComboBox" 
+                      Background="#FF4D4D4D" Foreground="Black" BorderBrush="#FF555555" 
+                      Width="200" Margin="0,0,0,20">
+                <ComboBoxItem Content="Продажи" IsSelected="True"/>
+                <ComboBoxItem Content="Затраты"/>
+                <ComboBoxItem Content="Популярные товары"/>
+                <ComboBoxItem Content="Динамика заказов"/>
+            </ComboBox>
+
+            <Button Content="Сформировать отчет" Click="GenerateReport_Click" 
+                    Background="#FF00A651" Foreground="White" 
+                    Height="40" Cursor="Hand" Margin="0,20,0,0"/>
+        </StackPanel>
+
+        <!-- DataGrid -->
+        <DataGrid x:Name="ReportDataGrid" AutoGenerateColumns="True"
+          Background="#FF3C3C3C" Foreground="White"
+          BorderThickness="0" GridLinesVisibility="None"
+          CanUserAddRows="False" Margin="20,271,20,0" Grid.RowSpan="2">
+            <DataGrid.CellStyle>
+                <Style TargetType="DataGridCell">
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Padding" Value="10"/>
+                    <Setter Property="FontSize" Value="14"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="Background" Value="#FF3C3C3C"/>
+                </Style>
+            </DataGrid.CellStyle>
+
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="#FF4D4D4D"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="Padding" Value="10"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="Background" Value="#FF3C3C3C"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="FontSize" Value="14"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                </Style>
+            </DataGrid.RowStyle>
+        </DataGrid>
+
+        <!-- Кнопки экспорта -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="20" HorizontalAlignment="Left">
+            <Button Content="Экспорт в Excel" Click="ExportToExcel_Click" 
+                    Background="#FF4D4D4D" Foreground="White" 
+                    Height="40" Width="132" Margin="0,0,10,0"/>
+            <Button Content="Экспорт в Word" Click="ExportToWord_Click" 
+                    Background="#FF3C3C3C" Foreground="White" 
+                    Height="40" Width="132" Margin="0,0,10,0"/>
+            <Button Content="Экспорт в PDF" Click="ExportToPdf_Click" 
+                    Background="#FF2D2D30" Foreground="White" 
+                    Height="40" Width="132"/>
+            <Button Content="История" Click="History_of_reportes" 
+                    Background="#FF2D2D30" Foreground="White" 
+                    Height="40" Width="132" Margin="10,0,0,0"/>
+        </StackPanel>
+    </Grid>
+</Window>
