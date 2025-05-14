@@ -66,12 +66,15 @@ namespace Diploma.main_windows
                             return;
                         }
 
+                        string customerEmail = row["Email"].ToString();
+
                         var orderDetailsList = orderDetails.AsEnumerable().ToList();
 
                         var confirmationWindow = new OrderConfirmationWindow2(
                             orderDetailsList,
                             totalAmount,
-                            adminUsername);
+                            adminUsername,
+                            customerEmail);
 
                         confirmationWindow.ShowDialog();
 

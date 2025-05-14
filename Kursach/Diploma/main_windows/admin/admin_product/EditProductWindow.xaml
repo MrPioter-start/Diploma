@@ -4,7 +4,7 @@
         Title="Изменить товар" Height="930" Width="500"
         Background="#FF2D2D30" Foreground="White"
         WindowStartupLocation="CenterScreen">
-    <Grid>
+    <Grid Margin="0,0,0,15">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="300">
             <TextBlock Text="Изменение товара" FontSize="20" Margin="0,0,0,40" Foreground="#FFCCCCCC" VerticalAlignment="Center" FontWeight="Bold"/>
             <TextBlock Text="Название:" FontSize="14" Margin="0,0,0,5" Foreground="#FFCCCCCC"/>

@@ -55,6 +55,7 @@
                 <DataGridTextColumn Header="Состав" Binding="{Binding Composition}" Width="*" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Срок годности" Binding="{Binding ShelfLife}" Width="*" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Время доставки" Binding="{Binding DeliveryTime}" Width="*" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Минимальное количество" Binding="{Binding MinStockLevel}" Width="*" IsReadOnly="True" Visibility="Hidden"/>
                 <DataGridTemplateColumn Header="Действия" Width="200">
 
                     <DataGridTemplateColumn.CellTemplate>

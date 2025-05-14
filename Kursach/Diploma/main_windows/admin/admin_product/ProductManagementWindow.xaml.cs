@@ -95,6 +95,8 @@ namespace Kursach.main_windows.admin
                 string composition = selectedRow["Composition"].ToString();
                 string shelfLife = selectedRow["ShelfLife"].ToString();
                 string deliveryTime = selectedRow["DeliveryTime"].ToString();
+                string brand = selectedRow["Brand"].ToString();
+                int minStockLevel = Convert.ToInt32(selectedRow["MinStockLevel"]); 
 
                 var editProductWindow = new EditProductWindow(
                     name: name,
@@ -105,7 +107,9 @@ namespace Kursach.main_windows.admin
                     composition: composition,
                     shelfLife: shelfLife,
                     deliveryTime: deliveryTime,
-                    adminUsername: adminUsername
+                    adminUsername: adminUsername,
+                    brand: brand, 
+                    minStockLevel: minStockLevel 
                 );
 
                 editProductWindow.ShowDialog();

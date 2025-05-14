@@ -193,6 +193,28 @@
                     </Style>
                     </Button.Style>
                 </Button>
+                <Button Content="Скидки" Click="Promotions_click" 
+                        Background="Transparent" Foreground="White" 
+                        BorderThickness="0" FontSize="16" FontWeight="SemiBold" Cursor="Hand" Padding="15,10" Margin="20,0,0,0">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Foreground" Value="#FF00A651"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0" HorizontalAlignment="Right">
                 <TextBlock Text="Сумма в кассе:" Foreground="White" FontSize="16" FontWeight="Bold" Margin="0,0,10,0"/>

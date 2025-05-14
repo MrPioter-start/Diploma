@@ -13,7 +13,8 @@ namespace Kursach.main_windows.admin
         private string createdBy;
 
         public EditProductWindow(string name, string category, decimal price, int quantity,
-                         string size, string composition, string shelfLife, string deliveryTime, string adminUsername)
+                         string size, string composition, string shelfLife, string deliveryTime, string adminUsername,
+                         string brand, int minStockLevel)
         {
             InitializeComponent();
             this.originalName = name;
@@ -26,6 +27,8 @@ namespace Kursach.main_windows.admin
             CompositionTextBox.Text = composition;
             ShelfLifeTextBox.Text = shelfLife;
             DeliveryTimeTextBox.Text = deliveryTime;
+            BrandTextBox.Text = brand; 
+            MinStockLevelTextBox.Text = minStockLevel.ToString(); 
 
             LoadCategories(category);
         }
@@ -59,12 +62,12 @@ namespace Kursach.main_windows.admin
             string newDeliveryTime = DeliveryTimeTextBox.Text.Trim();
             string newBrand = BrandTextBox.Text.Trim();
 
-
             if (CategoryComboBox.SelectedValue == null)
             {
                 MessageBox.Show("Выберите категорию.", "Ошибка");
                 return;
             }
+
             int categoryID = (int)CategoryComboBox.SelectedValue;
 
             if (!decimal.TryParse(PriceTextBox.Text, out decimal newPrice) || newPrice <= 0)
@@ -124,18 +127,18 @@ namespace Kursach.main_windows.admin
             try
             {
                 Queries.UpdateProduct(
-            originalName: originalName,
-            newName: newName,
-            categoryID: categoryID,
-            price: newPrice,
-            quantity: newQuantity,
-            size: newSize,
-            composition: newComposition,
-            shelfLife: newShelfLife,
-            deliveryTime: newDeliveryTime,
-            createdBy: createdBy,
-            minStockLevel: newMinStockLevel,
-            brand: newBrand
+                    originalName: originalName,
+                    newName: newName,
+                    categoryID: categoryID,
+                    price: newPrice,
+                    quantity: newQuantity,
+                    size: newSize,
+                    composition: newComposition,
+                    shelfLife: newShelfLife,
+                    deliveryTime: newDeliveryTime,
+                    createdBy: createdBy,
+                    minStockLevel: newMinStockLevel,
+                    brand: newBrand
                 );
 
                 MessageBox.Show("Товар успешно обновлен.", "Успех");

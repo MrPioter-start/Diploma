@@ -47,6 +47,9 @@
     <Compile Update="main_windows\admin\admin_cash\CashManagementWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="main_windows\admin\Promotions\PromotionsManagementWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="main_windows\admin\Reportes\Reportes.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

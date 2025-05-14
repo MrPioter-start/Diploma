@@ -14,13 +14,15 @@ namespace Diploma.main_windows
         private decimal totalAmount;
         private List<DataRow> selectedProducts;
         private string adminUsername;
+        private string customerEmail;
 
-        public OrderConfirmationWindow2(List<DataRow> selectedProducts, decimal totalAmount, string adminUsername)
+        public OrderConfirmationWindow2(List<DataRow> selectedProducts, decimal totalAmount, string adminUsername, string customerEmail)
         {
             InitializeComponent();
             this.selectedProducts = selectedProducts;
             this.totalAmount = totalAmount;
             this.adminUsername = adminUsername;
+            this.customerEmail = customerEmail;
 
             var orderDetails = selectedProducts.Select(row => new
             {
@@ -46,6 +48,7 @@ namespace Diploma.main_windows
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при подтверждении заказа: {ex.Message}", "Ошибка");
+                IsConfirmed = false;
             }
         }
 
@@ -59,6 +62,11 @@ namespace Diploma.main_windows
         {
             try
             {
+                if (!IsOrderQuantityValid(selectedProducts))
+                {
+                    throw new InvalidOperationException("Недостаточно товара на складе.");
+                }
+
                 var selectedProductsForSaving = selectedProducts
                     .Where(row => row.Field<int>("OrderQuantity") > 0)
                     .ToList();
@@ -73,6 +81,10 @@ namespace Diploma.main_windows
                 UpdateQuantities(selectedProductsForSaving);
 
                 Queries.UpdateCashAmount(totalAmount, "Продажа", adminUsername);
+
+                decimal currentTotalOrders = Queries.GetCustomerTotalOrders(customerEmail);
+
+                Queries.UpdateCustomerTotalOrders(customerEmail, currentTotalOrders + totalAmount);
 
                 MessageBox.Show("Заказ успешно добавлен в продажи!", "Успех");
             }
@@ -114,6 +126,25 @@ namespace Diploma.main_windows
             {
                 command.Parameters.AddWithValue("@ProductName", productName);
             }) is int quantity ? quantity : 0;
+        }
+
+        private bool IsOrderQuantityValid(List<DataRow> selectedProducts)
+        {
+            foreach (var row in selectedProducts)
+            {
+                string productName = row.Field<string>("ProductName");
+                int orderQuantity = row.Field<int>("OrderQuantity");
+
+                int currentQuantity = GetCurrentProductQuantity(productName);
+
+                if (orderQuantity > currentQuantity)
+                {
+                    MessageBox.Show($"Недостаточно товара '{productName}' на складе. Требуется: {orderQuantity}, доступно: {currentQuantity}.", "Ошибка");
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

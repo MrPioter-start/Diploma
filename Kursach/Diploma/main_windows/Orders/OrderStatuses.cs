@@ -6,10 +6,10 @@ namespace Diploma.main_windows
     {
         public static List<string> All { get; } = new List<string>
         {
-            "Оформление",
-            "В обработке",
-            "Доставка",
-            "Завершен"
+        "Оформление",
+        "В обработке",
+        "Доставка",
+        "Завершен"
         };
     }
 }

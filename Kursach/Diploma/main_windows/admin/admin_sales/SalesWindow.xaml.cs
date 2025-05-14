@@ -30,6 +30,7 @@ namespace Kursach.main_windows.admin
 
         private void LoadProducts()
         {
+            // Загружаем товары из базы данных
             productsTable = Queries.GetProducts(adminUsername);
             if (productsTable == null || productsTable.Rows.Count == 0)
             {
@@ -37,6 +38,7 @@ namespace Kursach.main_windows.admin
                 return;
             }
 
+            // Добавляем колонку для количества заказа, если её нет
             if (!productsTable.Columns.Contains("OrderQuantity"))
             {
                 productsTable.Columns.Add("OrderQuantity", typeof(int));
@@ -46,8 +48,13 @@ namespace Kursach.main_windows.admin
                 }
             }
 
+            // Применяем акции к товарам
+            Queries.ApplyPromotions(productsTable);
+
+            // Отображаем товары в DataGrid
             ProductsDataGrid.ItemsSource = productsTable.DefaultView;
-            
+
+            // Обновляем общую стоимость
             UpdateTotalPrice();
         }
 
@@ -315,7 +322,6 @@ namespace Kursach.main_windows.admin
 
                             if (!int.TryParse(quantityStr, out int quantity))
                             {
-                                MessageBox.Show($"Ошибка: Неверный формат количества в строке {row}. Ожидается число.", "Ошибка");
                                 continue;
                             }
 

@@ -1,5 +1,6 @@
 ﻿using Diploma.main_windows;
 using Diploma.main_windows.admin.admin_product;
+using Diploma.main_windows.admin.Promotions;
 using Diploma.main_windows.admin.Reportes;
 using Kursach.Database;
 using Kursach.main_windows;
@@ -156,6 +157,12 @@ namespace Kursach
             Orders.Closed += (s, ev) => Dispatcher.Invoke(LoadCashAmount);
             Orders.Closed += (s, ev) => Dispatcher.Invoke(LoadSalesHistory);
             Orders.ShowDialog();
+        }
+
+        private void Promotions_click(object sender, RoutedEventArgs e)
+        {
+            var promotions = new PromotionsManagementWindow(adminUsername);
+            promotions.ShowDialog();
         }
     }
 }

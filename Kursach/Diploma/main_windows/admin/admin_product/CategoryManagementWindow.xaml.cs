@@ -1,4 +1,5 @@
 ﻿using Kursach.Database;
+using Kursach.Database.WarehouseApp.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,6 +41,12 @@ namespace Kursach.main_windows.admin.admin_product
 
             try
             {
+                if (IsCategoryExists(categoryName))
+                {
+                    MessageBox.Show("Категория с таким названием уже существует.", "Ошибка");
+                    return;
+                }
+
                 Queries.AddCategory(categoryName, createdBy);
                 MessageBox.Show("Категория успешно добавлена.", "Успех");
                 this.Close();
@@ -48,6 +55,22 @@ namespace Kursach.main_windows.admin.admin_product
             {
                 MessageBox.Show($"Ошибка при добавлении категории: {ex.Message}", "Ошибка");
             }
+        }
+
+        private bool IsCategoryExists(string categoryName)
+        {
+            string query = @"
+        SELECT COUNT(*) 
+        FROM Categories 
+        WHERE CategoryName = @CategoryName AND CreatedBy = @CreatedBy";
+
+            int count = DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@CategoryName", categoryName);
+                command.Parameters.AddWithValue("@CreatedBy", createdBy);
+            }) is int result ? result : 0;
+
+            return count > 0;
         }
     }
 }

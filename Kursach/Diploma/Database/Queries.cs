@@ -9,6 +9,79 @@ namespace Kursach.Database
     public static class Queries
     {
 
+        public static decimal GetLoyaltyDiscount(string customerEmail)
+        {
+            string query = @"
+        SELECT 
+            MAX(LoyaltyLevelID) AS LoyaltyLevelID,
+            DiscountPercentage
+        FROM 
+            LoyaltyLevels
+        WHERE 
+            MinOrderAmount <= (SELECT TotalOrders FROM Customers WHERE Email = @CustomerEmail)";
+
+            return DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@CustomerEmail", customerEmail);
+            }) is decimal discount ? discount : 0;
+        }
+
+        public static decimal GetPersonalDiscount(string customerEmail)
+        {
+            string query = @"
+        SELECT PersonalDiscount 
+        FROM Customers 
+        WHERE Email = @CustomerEmail";
+
+            return DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@CustomerEmail", customerEmail);
+            }) is decimal discount ? discount : 0;
+        }
+
+        public static decimal CalculateTotalDiscount(string customerEmail)
+        {
+            decimal loyaltyDiscount = GetLoyaltyDiscount(customerEmail);
+
+            string query = @"
+        SELECT PersonalDiscount 
+        FROM Customers 
+        WHERE Email = @CustomerEmail";
+
+            decimal personalDiscount = DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@CustomerEmail", customerEmail);
+            }) is decimal discount ? discount : 0;
+
+            return loyaltyDiscount + personalDiscount;
+        }
+
+        public static void UpdateCustomerTotalOrders(string customerEmail, decimal newTotalOrders)
+        {
+            string query = @"
+        UPDATE Customers
+        SET TotalOrders = @NewTotalOrders
+        WHERE Email = @Email";
+
+            DatabaseHelper.ExecuteNonQuery(query, command =>
+            {
+                command.Parameters.AddWithValue("@NewTotalOrders", newTotalOrders);
+                command.Parameters.AddWithValue("@Email", customerEmail);
+            });
+        }
+        public static decimal GetCustomerTotalOrders(string customerEmail)
+        {
+            string query = @"
+        SELECT TotalOrders 
+        FROM Customers 
+        WHERE Email = @Email";
+
+            return DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@Email", customerEmail);
+            }) is decimal totalOrders ? totalOrders : 0;
+        }
+
         public static void UpdateOrderStatus(int orderId, string newStatus)
         {
             string query = @"
@@ -41,19 +114,7 @@ namespace Kursach.Database
 
             return Convert.ToInt32(result);
         }
-        public static void UpdateCustomerTotalOrders(string email, decimal totalAmount)
-        {
-            string query = @"
-        UPDATE Customers
-        SET TotalOrders = TotalOrders + @TotalAmount
-        WHERE Email = @Email";
 
-            DatabaseHelper.ExecuteNonQuery(query, command =>
-            {
-                command.Parameters.AddWithValue("@TotalAmount", totalAmount);
-                command.Parameters.AddWithValue("@Email", email);
-            });
-        }
         public static void AddSale(List<DataRow> selectedProducts, decimal total, string userUsername, string adminUsername)
         {
             int customerId = GetCustomerIdByUsername(userUsername);
@@ -550,16 +611,86 @@ namespace Kursach.Database
         {
             string query = @"
         SELECT 
-            ProductID, Name, Categories.CategoryName, Price, Quantity, Size, Composition, ShelfLife, DeliveryTime, MinStockLevel, Brand
-        FROM Products
-        INNER JOIN Categories ON Products.CategoryID = Categories.CategoryID
-        WHERE Products.CreatedBy = @CreatedBy";
+            ProductID, 
+            Name, 
+            Categories.CategoryName, 
+            Price, 
+            Quantity, 
+            Brand
+        FROM 
+            Products
+        INNER JOIN 
+            Categories ON Products.CategoryID = Categories.CategoryID
+        WHERE 
+            Products.CreatedBy = @CreatedBy";
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
                 command.Parameters.AddWithValue("@CreatedBy", adminUsername);
             });
         }
+
+        public static void ApplyPromotions(DataTable productsTable)
+        {
+            try
+            {
+                string promotionsQuery = @"
+            SELECT 
+                p.PromotionID,
+                p.DiscountPercentage,
+                pr.TargetType,
+                pr.TargetValue
+            FROM 
+                Promotions p
+            JOIN 
+                PromotionRules pr ON p.PromotionID = pr.PromotionID
+            WHERE 
+                GETDATE() BETWEEN p.StartDate AND p.EndDate";
+
+                var promotions = DatabaseHelper.ExecuteQuery(promotionsQuery, command => { });
+
+                foreach (DataRow promotionRow in promotions.Rows)
+                {
+                    decimal discountPercentage = Convert.ToDecimal(promotionRow["DiscountPercentage"]);
+                    string targetType = promotionRow["TargetType"].ToString();
+                    string targetValue = promotionRow["TargetValue"].ToString();
+
+                    foreach (DataRow productRow in productsTable.Rows)
+                    {
+                        bool applyDiscount = false;
+
+                        switch (targetType)
+                        {
+                            case "Product":
+                                if (productRow["Name"].ToString() == targetValue)
+                                    applyDiscount = true;
+                                break;
+                            case "Brand":
+                                if (productRow["Brand"].ToString() == targetValue)
+                                    applyDiscount = true;
+                                break;
+                            case "Category":
+                                if (productRow["CategoryName"].ToString() == targetValue)
+                                    applyDiscount = true;
+                                break;
+                        }
+
+                        if (applyDiscount)
+                        {
+                            decimal originalPrice = Convert.ToDecimal(productRow["Price"]);
+                            decimal discountedPrice = originalPrice * (1 - discountPercentage / 100);
+                            productRow["Price"] = Math.Round(discountedPrice, 2);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Ошибка при применении акций: {ex.Message}");
+            }
+        }
+
+
 
         [Obsolete]
         public static void UpdateProduct(string originalName, string newName, int categoryID, decimal price, int quantity,

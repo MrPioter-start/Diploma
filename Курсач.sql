@@ -222,11 +222,6 @@ SELECT * FROM CashRegister WHERE UserUsername = 'admin';
 
 SELECT * FROM CashTransactions WHERE AdminUsername = 'admin';
 
-ALTER TABLE Users
-ADD Preferences NVARCHAR(MAX) NULL,
-    LoyaltyLevel INT DEFAULT 0,
-    PersonalDiscount DECIMAL(5,2) DEFAULT 0.00;
-
 ALTER TABLE Products
 ADD Size NVARCHAR(50) NULL,
     Composition NVARCHAR(MAX) NULL,
@@ -277,39 +272,39 @@ ADD Brand NVARCHAR(100) NULL;
 INSERT INTO Products (Name, Brand, CategoryID, Price, Quantity, Size, Composition, ShelfLife, MinStockLevel, DeliveryTime, CreatedBy)
 VALUES 
 -- Категория 1: Косметика
-('Тональный крем', 'Loreal', 21, 1500.00, 50, '30ml', 'Вода, минералы, пигменты', 365, 10, 7, 'admin'),
-('Маска для лица', 'Kerastase', 21, 2000.00, 30, '50ml', 'Экстракты растений', 365, 5, 7, 'admin'),
-('Тушь для ресниц', 'Maybelline', 21, 900.00, 40, '10ml', 'Пигменты, воск', 365, 8, 7, 'admin'),
-('Помада матовая', 'Mac', 21, 1200.00, 35, '3g', 'Пчелиный воск, красители', 365, 6, 7, 'admin'),
-('Пудра компактная', 'Chanel', 21, 2500.00, 20, '12g', 'Минералы, тальк', 365, 5, 7, 'admin'),
+('Тональный крем', 'Loreal', 34, 1500.00, 50, '30ml', 'Вода, минералы, пигменты', 365, 10, 7, 'admin'),
+('Маска для лица', 'Kerastase', 34, 2000.00, 30, '50ml', 'Экстракты растений', 365, 5, 7, 'admin'),
+('Тушь для ресниц', 'Maybelline', 34, 900.00, 40, '10ml', 'Пигменты, воск', 365, 8, 7, 'admin'),
+('Помада матовая', 'Mac', 34, 1200.00, 35, '3g', 'Пчелиный воск, красители', 365, 6, 7, 'admin'),
+('Пудра компактная', 'Chanel', 34, 2500.00, 20, '12g', 'Минералы, тальк', 365, 5, 7, 'admin'),
 
 -- Категория 2: Инструменты
-('Ножницы для маникюра', 'Staleks', 22, 800.00, 25, '15cm', 'Сталь', 730, 3, 14, 'admin'),
-('Фреза для ногтей', 'GoldenBrush', 22, 1200.00, 20, '20cm', 'Металл, пластик', 365, 5, 7, 'admin'),
-('Щипцы для завивки', 'BaByliss', 22, 2500.00, 15, '25cm', 'Металл, керамика', 365, 4, 7, 'admin'),
-('Плойка для волос', 'Rowenta', 22, 3000.00, 10, '30cm', 'Металл, керамика', 365, 3, 7, 'admin'),
-('Машинка для стрижки', 'Philips', 22, 4000.00, 8, '15cm', 'Пластик, металл', 365, 2, 7, 'admin'),
+('Ножницы для маникюра', 'Staleks', 35, 800.00, 25, '15cm', 'Сталь', 730, 3, 14, 'admin'),
+('Фреза для ногтей', 'GoldenBrush', 35, 1200.00, 20, '20cm', 'Металл, пластик', 365, 5, 7, 'admin'),
+('Щипцы для завивки', 'BaByliss', 35, 2500.00, 15, '25cm', 'Металл, керамика', 365, 4, 7, 'admin'),
+('Плойка для волос', 'Rowenta', 35, 3000.00, 10, '30cm', 'Металл, керамика', 365, 3, 7, 'admin'),
+('Машинка для стрижки', 'Philips', 35, 4000.00, 8, '15cm', 'Пластик, металл', 365, 2, 7, 'admin'),
 
 -- Категория 3: Уход за кожей
-('Крем для рук', 'Nivea', 23, 500.00, 50, '75ml', 'Масла, витамины', 365, 10, 7, 'admin'),
-('Скраб для тела', 'The Body Shop', 23, 1200.00, 30, '200ml', 'Сахар, масла', 365, 5, 7, 'admin'),
-('Маска для лица', 'Innisfree', 23, 1500.00, 25, '100ml', 'Экстракты растений', 365, 6, 7, 'admin'),
-('Сыворотка для кожи', 'SkinCeuticals', 23, 4500.00, 10, '30ml', 'Витамин C, антиоксиданты', 365, 3, 7, 'admin'),
-('Лосьон для тела', 'Bioderma', 23, 1800.00, 40, '250ml', 'Масла, экстракты', 365, 8, 7, 'admin'),
+('Крем для рук', 'Nivea', 36, 500.00, 50, '75ml', 'Масла, витамины', 365, 10, 7, 'admin'),
+('Скраб для тела', 'The Body Shop', 36, 1200.00, 30, '200ml', 'Сахар, масла', 365, 5, 7, 'admin'),
+('Маска для лица', 'Innisfree', 36, 1500.00, 25, '100ml', 'Экстракты растений', 365, 6, 7, 'admin'),
+('Сыворотка для кожи', 'SkinCeuticals', 36, 4500.00, 10, '30ml', 'Витамин C, антиоксиданты', 365, 3, 7, 'admin'),
+('Лосьон для тела', 'Bioderma', 36, 1800.00, 40, '250ml', 'Масла, экстракты', 365, 8, 7, 'admin'),
 
 -- Категория 4: Уход за волосами
-('Шампунь', 'Loreal', 24, 900.00, 60, '250ml', 'Экстракты, масла', 365, 12, 7, 'admin'),
-('Кондиционер', 'Pantene', 24, 800.00, 55, '200ml', 'Масла, протеины', 365, 10, 7, 'admin'),
-('Маска для волос', 'Kerastase', 24, 2000.00, 30, '250ml', 'Экстракты растений', 365, 5, 7, 'admin'),
-('Сыворотка для кончиков', 'Moroccanoil', 24, 1500.00, 25, '100ml', 'Аргановое масло', 365, 6, 7, 'admin'),
-('Спрей для укладки', 'Tigi', 24, 1200.00, 40, '150ml', 'Полимеры, масла', 365, 8, 7, 'admin'),
+('Шампунь', 'Loreal', 37, 900.00, 60, '250ml', 'Экстракты, масла', 365, 12, 7, 'admin'),
+('Кондиционер', 'Pantene', 37, 800.00, 55, '200ml', 'Масла, протеины', 365, 10, 7, 'admin'),
+('Маска для волос', 'Kerastase', 37, 2000.00, 30, '250ml', 'Экстракты растений', 365, 5, 7, 'admin'),
+('Сыворотка для кончиков', 'Moroccanoil', 37, 1500.00, 25, '100ml', 'Аргановое масло', 365, 6, 7, 'admin'),
+('Спрей для укладки', 'Tigi', 37, 1200.00, 40, '150ml', 'Полимеры, масла', 365, 8, 7, 'admin'),
 
 -- Категория 5: Гигиенические товары
-('Зубная щетка', 'Oral-B', 25, 300.00, 100, NULL, 'Пластик, щетина', 365, 20, 7, 'admin'),
-('Зубная паста', 'Colgate', 25, 200.00, 150, '100ml', 'Фторид, кальций', 365, 30, 7, 'admin'),
-('Дезодорант', 'Rexona', 25, 400.00, 80, '150ml', 'Алюминий хлоргидрат', 365, 15, 7, 'admin'),
-('Мыло', 'Dove', 25, 150.00, 200, '100g', 'Масла, экстракты', 365, 50, 7, 'admin'),
-('Шампунь против перхоти', 'Head & Shoulders', 25, 600.00, 70, '250ml', 'Цинк, экстракты', 365, 10, 7, 'admin');
+('Зубная щетка', 'Oral-B', 38, 300.00, 100, NULL, 'Пластик, щетина', 365, 20, 7, 'admin'),
+('Зубная паста', 'Colgate', 38, 200.00, 150, '100ml', 'Фторид, кальций', 365, 30, 7, 'admin'),
+('Дезодорант', 'Rexona', 38, 400.00, 80, '150ml', 'Алюминий хлоргидрат', 365, 15, 7, 'admin'),
+('Мыло', 'Dove', 38, 150.00, 200, '100g', 'Масла, экстракты', 365, 50, 7, 'admin'),
+('Шампунь против перхоти', 'Head & Shoulders', 38, 600.00, 70, '250ml', 'Цинк, экстракты', 365, 10, 7, 'admin');
 
 INSERT INTO Categories (CategoryName, CreatedBy)
 VALUES 
@@ -336,4 +331,51 @@ DELETE FROM Returns
 DELETE FROM Customers
 DELETE FROM Orders
 DELETE FROM OrderDetails
+DELETE FROM Users
 
+ALTER TABLE Customers
+ADD  PersonalDiscount DECIMAL(5, 2) DEFAULT 0;
+
+CREATE TABLE LoyaltyLevels (
+    LoyaltyLevelID INT PRIMARY KEY,
+    LevelName NVARCHAR(50),
+    MinOrderAmount DECIMAL(18, 2),
+    DiscountPercentage DECIMAL(5, 2)
+);
+
+-- Добавление уровней лояльности
+INSERT INTO LoyaltyLevels (LoyaltyLevelID, LevelName, MinOrderAmount, DiscountPercentage) VALUES
+(1, 'Бронзовый', 1000, 5.00),
+(2, 'Серебряный', 4000, 10.00),
+(3, 'Золотой', 7000, 15.00);
+
+ALTER TABLE LoyaltyLevels
+ADD AdminUsername NVARCHAR(50);
+
+ALTER TABLE LoyaltyLevels
+ADD CONSTRAINT FK_LoyaltyLevels_Users
+FOREIGN KEY (AdminUsername) REFERENCES Users(Username);
+
+INSERT INTO LoyaltyLevels (LoyaltyLevelID, LevelName, MinOrderAmount, DiscountPercentage, AdminUsername) VALUES
+(1, 'Бронзовый', 1000, 5.00, 'admin'),
+(2, 'Серебряный', 4000, 10.00, 'admin'),
+(3, 'Золотой', 7000, 15.00, 'admin');
+
+
+CREATE TABLE PromotionRules (
+    RuleID INT IDENTITY(1,1) PRIMARY KEY,
+    PromotionID INT NOT NULL, -- Ссылка на акцию
+    TargetType NVARCHAR(50) NOT NULL, -- Тип цели: 'Product', 'Brand', 'Category'
+    TargetValue NVARCHAR(255) NOT NULL, -- Значение цели (например, название товара, бренда или категории)
+    FOREIGN KEY (PromotionID) REFERENCES Promotions(PromotionID)
+);
+
+select * from PromotionRules
+select * from Promotions
+
+Delete from PromotionRules
+Delete from Promotions
+
+SELECT * FROM Products WHERE Brand = 'Loreal';
+SELECT * FROM Products WHERE Name = 'Тональный крем';
+SELECT * FROM Categories WHERE CategoryName = 'Косметика';
