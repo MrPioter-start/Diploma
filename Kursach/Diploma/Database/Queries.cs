@@ -279,12 +279,17 @@ namespace Kursach.Database
 
         public static DataTable GetProductsBySalesFrequency(string adminUsername)
         {
+            if (string.IsNullOrEmpty(adminUsername))
+            {
+                throw new ArgumentException("Имя пользователя администратора не может быть пустым.");
+            }
+
             string query = @"
 SELECT 
-    p.ProductID,
-    p.Name,
+    p.ProductID, 
+    p.Name, 
     p.Brand,
-    c.CategoryName,
+    c.CategoryName, 
     p.Price,
     p.Quantity,
     p.Size,
@@ -880,34 +885,79 @@ WHERE
             })?.ToString();
         }
 
-        [Obsolete]
-        public static DataTable GetProducts(string adminUsername)
+        public static DataTable GetProductsForSale(string adminUsername)
         {
+            if (string.IsNullOrWhiteSpace(adminUsername))
+            {
+                throw new ArgumentException("Имя пользователя администратора не может быть пустым.");
+            }
+
             string query = @"
-        SELECT 
-            ProductID, 
-            Name, 
-            Brand,
-            Categories.CategoryName, 
-            Price,
-            Quantity,
-            Size,
-            Composition,
-            ShelfLife,
-            DeliveryTime,
-            MinStockLevel
-        FROM 
-            Products
-        INNER JOIN 
-            Categories ON Products.CategoryID = Categories.CategoryID
-        WHERE 
-            Products.CreatedBy = @CreatedBy";
+SELECT 
+    Products.Name, 
+    Categories.CategoryName, 
+    Products.Brand, 
+    Products.Price, 
+    Products.Quantity,
+    ISNULL(SUM(TransactionDetails.Quantity), 0) AS TotalSoldQuantity
+FROM 
+    Products
+INNER JOIN 
+    Categories ON Products.CategoryID = Categories.CategoryID
+LEFT JOIN 
+    TransactionDetails ON Products.ProductID = TransactionDetails.ProductID
+WHERE 
+    Products.CreatedBy = @CreatedBy
+GROUP BY 
+    Products.Name, 
+    Categories.CategoryName, 
+    Products.Brand, 
+    Products.Price, 
+    Products.Quantity
+ORDER BY 
+    TotalSoldQuantity DESC";
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
                 command.Parameters.AddWithValue("@CreatedBy", adminUsername);
             });
         }
+
+
+        [Obsolete]
+        public static DataTable GetProducts(string adminUsername)
+        {
+            if (string.IsNullOrWhiteSpace(adminUsername))
+            {
+                throw new ArgumentException("Имя пользователя администратора не может быть пустым.");
+            }
+
+            string query = @"
+    SELECT 
+        ProductID, 
+        Name, 
+        Brand,
+        Categories.CategoryName, 
+        Price,
+        Quantity,
+        Size,
+        Composition,
+        ShelfLife,
+        DeliveryTime,
+        MinStockLevel
+    FROM 
+        Products
+    INNER JOIN 
+        Categories ON Products.CategoryID = Categories.CategoryID
+    WHERE 
+        Products.CreatedBy = @CreatedBy";
+
+            return DatabaseHelper.ExecuteQuery(query, command =>
+            {
+                command.Parameters.AddWithValue("@CreatedBy", adminUsername);
+            });
+        }
+
 
         public static void ApplyPromotions(DataTable productsTable)
         {

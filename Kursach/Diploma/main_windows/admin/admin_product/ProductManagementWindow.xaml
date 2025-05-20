@@ -64,6 +64,7 @@
                   BorderThickness="0" GridLinesVisibility="None"
                   Margin="20,0,20,20" CanUserAddRows="False" Grid.Row="1">
             <DataGrid.Columns>
+                <DataGridTextColumn Header="Название" Binding="{Binding ProductID}" Width="*" IsReadOnly="True" Visibility="Hidden"/>
                 <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="*" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Категория" Binding="{Binding CategoryName}" Width="*" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Бренд" Binding="{Binding Brand}" Width="*" IsReadOnly="True"/>

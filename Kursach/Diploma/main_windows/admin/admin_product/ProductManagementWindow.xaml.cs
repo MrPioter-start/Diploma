@@ -2,19 +2,10 @@
 using Kursach.Database.WarehouseApp.Database;
 using Kursach.main_windows.admin.admin_product;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace Kursach.main_windows.admin
 {
@@ -23,22 +14,46 @@ namespace Kursach.main_windows.admin
     /// </summary>
     public partial class ProductManagementWindow : Window
     {
-        private string adminUsername;
         private DataTable originalTable;
+        private readonly string adminUsername; // сделаем readonly, чтобы случайно не переписать
 
         public ProductManagementWindow(string username)
         {
             InitializeComponent();
+
+            if (string.IsNullOrEmpty(username))
+            {
+                MessageBox.Show("В конструктор ProductManagementWindow передано пустое имя администратора!", "Ошибка");
+                this.Close();
+                return;
+            }
+
             this.adminUsername = username;
+
             SearchTextBox.TextChanged += SearchTextBox_TextChanged;
-            LoadProducts();
+
+            LoadProducts(); // Теперь поле заполнено, можно загружать
         }
+
+        private void LoadProducts()
+        {
+            try
+            {
+                var products = Queries.GetProducts(adminUsername);
+                ProductsDataGrid.ItemsSource = products.DefaultView;
+            }
+            catch (Exception ex)
+            {
+                return;
+            }
+        }
+
 
         private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (originalTable == null || originalTable.Rows.Count == 0)
             {
-                ProductsDataGrid.ItemsSource = null; 
+                ProductsDataGrid.ItemsSource = null;
                 return;
             }
 
@@ -52,29 +67,16 @@ namespace Kursach.main_windows.admin
 
             var filteredRows = originalTable.AsEnumerable()
                 .Where(row => row.ItemArray.Any(field => field?.ToString().ToLower().Contains(searchQuery) == true))
-                .ToList(); 
+                .ToList();
 
             if (filteredRows.Count == 0)
             {
-                ProductsDataGrid.ItemsSource = null; 
+                ProductsDataGrid.ItemsSource = null;
                 return;
             }
 
             DataTable filteredTable = filteredRows.CopyToDataTable();
             ProductsDataGrid.ItemsSource = filteredTable.DefaultView;
-        }
-
-        private void LoadProducts()
-        {
-            try
-            {
-                originalTable = Queries.GetProducts(adminUsername); 
-                ProductsDataGrid.ItemsSource = originalTable.DefaultView;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}", "Ошибка");
-            }
         }
 
         private void AddProduct_Click(object sender, RoutedEventArgs e)
@@ -97,7 +99,7 @@ namespace Kursach.main_windows.admin
                 string shelfLife = selectedRow["ShelfLife"].ToString();
                 string deliveryTime = selectedRow["DeliveryTime"].ToString();
                 string brand = selectedRow["Brand"].ToString();
-                int minStockLevel = Convert.ToInt32(selectedRow["MinStockLevel"]); 
+                int minStockLevel = Convert.ToInt32(selectedRow["MinStockLevel"]);
 
                 var editProductWindow = new EditProductWindow(
                     name: name,
@@ -109,8 +111,8 @@ namespace Kursach.main_windows.admin
                     shelfLife: shelfLife,
                     deliveryTime: deliveryTime,
                     adminUsername: adminUsername,
-                    brand: brand, 
-                    minStockLevel: minStockLevel 
+                    brand: brand,
+                    minStockLevel: minStockLevel
                 );
 
                 editProductWindow.ShowDialog();
@@ -124,13 +126,12 @@ namespace Kursach.main_windows.admin
             if (ProductsDataGrid.SelectedItem is DataRowView selectedRow)
             {
                 string productName = selectedRow["Name"].ToString();
-
                 int productId = Convert.ToInt32(selectedRow["ProductID"]);
 
                 string checkUsageQuery = @"
-            SELECT COUNT(*) 
-            FROM TransactionDetails 
-            WHERE ProductID = @ProductID";
+                    SELECT COUNT(*) 
+                    FROM TransactionDetails 
+                    WHERE ProductID = @ProductID";
 
                 int usageCount = Convert.ToInt32(DatabaseHelper.ExecuteScalar(checkUsageQuery, command =>
                 {
@@ -183,13 +184,26 @@ namespace Kursach.main_windows.admin
         {
             try
             {
+                if (string.IsNullOrEmpty(adminUsername))
+                {
+                    MessageBox.Show("Имя администратора пустое при загрузке часто продаваемых товаров.", "Ошибка");
+                    return;
+                }
+
                 var frequentProducts = Queries.GetProductsBySalesFrequency(adminUsername);
 
                 var filteredRows = frequentProducts.AsEnumerable()
-                    .Where(row => row.Field<int>("TotalSoldQuantity") > 5) 
-                    .CopyToDataTable();
+                    .Where(row => row.Field<int>("TotalSoldQuantity") > 5)
+                    .ToList();
 
-                ProductsDataGrid.ItemsSource = filteredRows.DefaultView;
+                if (filteredRows.Count == 0)
+                {
+                    ProductsDataGrid.ItemsSource = null;
+                    return;
+                }
+
+                DataTable filteredTable = filteredRows.CopyToDataTable();
+                ProductsDataGrid.ItemsSource = filteredTable.DefaultView;
             }
             catch (Exception ex)
             {
@@ -201,13 +215,26 @@ namespace Kursach.main_windows.admin
         {
             try
             {
+                if (string.IsNullOrEmpty(adminUsername))
+                {
+                    MessageBox.Show("Имя администратора пустое при загрузке нечасто продаваемых товаров.", "Ошибка");
+                    return;
+                }
+
                 var infrequentProducts = Queries.GetProductsBySalesFrequency(adminUsername);
 
                 var filteredRows = infrequentProducts.AsEnumerable()
-                    .Where(row => row.Field<int>("TotalSoldQuantity") <= 10) 
-                    .CopyToDataTable();
+                    .Where(row => row.Field<int>("TotalSoldQuantity") <= 10)
+                    .ToList();
 
-                ProductsDataGrid.ItemsSource = filteredRows.DefaultView;
+                if (filteredRows.Count == 0)
+                {
+                    ProductsDataGrid.ItemsSource = null;
+                    return;
+                }
+
+                DataTable filteredTable = filteredRows.CopyToDataTable();
+                ProductsDataGrid.ItemsSource = filteredTable.DefaultView;
             }
             catch (Exception ex)
             {
