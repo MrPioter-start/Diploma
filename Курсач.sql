@@ -256,15 +256,14 @@ CREATE TABLE ProductPromotions (
 CREATE TABLE Reports (
     ReportID INT IDENTITY(1,1) PRIMARY KEY,
     ReportType NVARCHAR(50) NOT NULL,
-    GeneratedDate DATETIME NOT NULL,
+    GeneratedDate DATETIME NOT NULL DEFAULT GETDATE(),
     PeriodStart DATETIME NOT NULL,
     PeriodEnd DATETIME NOT NULL,
     GeneratedBy NVARCHAR(50) NOT NULL, -- Пользователь, который сформировал отчет
-    SaleID INT NULL, -- Опционально: связь с конкретной продажей (если отчет о продажах)
+    TransactionID INT NULL, -- Опционально: связь с конкретной транзакцией (если отчет о продажах или заказах)
     FOREIGN KEY (GeneratedBy) REFERENCES Users(Username),
-    FOREIGN KEY (SaleID) REFERENCES Sales(SaleID)
+    FOREIGN KEY (TransactionID) REFERENCES Transactions(TransactionID)
 );
-
 ALTER TABLE Products
 ADD Brand NVARCHAR(100) NULL;
 
@@ -379,3 +378,58 @@ Delete from Promotions
 SELECT * FROM Products WHERE Brand = 'Loreal';
 SELECT * FROM Products WHERE Name = 'Тональный крем';
 SELECT * FROM Categories WHERE CategoryName = 'Косметика';
+
+DROP TABLE Sales;
+DROP TABLE SalesDetails;
+DROP TABLE Orders;
+DROP TABLE OrderDetails;
+select * from SaleDetails
+
+ALTER TABLE Returns
+DROP CONSTRAINT FK_Returns_Sales;
+
+Drop table Returns
+DROP TABLE SaleDetails;
+DROP TABLE Sales;
+DROP TABLE OrderDetails;
+DROP TABLE Orders;
+
+CREATE TABLE Returns (
+    ReturnID INT PRIMARY KEY IDENTITY(1,1),
+    TransactionID INT NOT NULL, 
+    ProductName NVARCHAR(100) NOT NULL,
+    ReturnedQuantity INT NOT NULL,
+    ReturnTime DATETIME DEFAULT GETDATE(),
+    AdminUsername NVARCHAR(50) NOT NULL,
+);
+
+ALTER TABLE Returns
+ADD CONSTRAINT FK_Returns_Transactions
+FOREIGN KEY (TransactionID) REFERENCES Transactions(TransactionID);
+
+CREATE TABLE Transactions (
+    TransactionID INT PRIMARY KEY IDENTITY(1,1),
+    Type NVARCHAR(50) NOT NULL CHECK (Type IN ('Продажа', 'Заказ')),
+    CustomerID INT NULL,
+    Status NVARCHAR(50) NULL,
+    CreatedBy NVARCHAR(50) NOT NULL,
+    Total DECIMAL(18, 2) NOT NULL,
+    TransactionTime DATETIME NOT NULL DEFAULT GETDATE(),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID),
+    FOREIGN KEY (CreatedBy) REFERENCES Users(Username)
+);
+
+select * from TransactionDetails
+select * from Customers
+
+CREATE TABLE TransactionDetails (
+    DetailID INT PRIMARY KEY IDENTITY(1,1),
+    TransactionID INT NOT NULL,
+    ProductID INT NOT NULL,
+    Quantity INT NOT NULL,
+    Price DECIMAL(18, 2) NOT NULL,
+    FOREIGN KEY (TransactionID) REFERENCES Transactions(TransactionID),
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID)
+);
+
+select * from Reports

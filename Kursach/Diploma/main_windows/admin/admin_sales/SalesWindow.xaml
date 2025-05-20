@@ -24,6 +24,7 @@
                  BorderBrush="#FF555555" BorderThickness="1" Padding="5" Height="30" 
                  Width="200" FontSize="14" TextChanged="SearchTextBox_TextChanged"/>
 
+                
             </StackPanel>
         </DockPanel>
 

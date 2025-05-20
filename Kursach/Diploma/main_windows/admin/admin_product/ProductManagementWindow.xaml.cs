@@ -1,4 +1,5 @@
 ﻿using Kursach.Database;
+using Kursach.Database.WarehouseApp.Database;
 using Kursach.main_windows.admin.admin_product;
 using System;
 using System.Collections.Generic;
@@ -124,6 +125,24 @@ namespace Kursach.main_windows.admin
             {
                 string productName = selectedRow["Name"].ToString();
 
+                int productId = Convert.ToInt32(selectedRow["ProductID"]);
+
+                string checkUsageQuery = @"
+            SELECT COUNT(*) 
+            FROM TransactionDetails 
+            WHERE ProductID = @ProductID";
+
+                int usageCount = Convert.ToInt32(DatabaseHelper.ExecuteScalar(checkUsageQuery, command =>
+                {
+                    command.Parameters.AddWithValue("@ProductID", productId);
+                }));
+
+                if (usageCount > 0)
+                {
+                    MessageBox.Show("Невозможно удалить товар, так как он используется в транзакциях.", "Ошибка");
+                    return;
+                }
+
                 try
                 {
                     Queries.DeleteProduct(productName, adminUsername);
@@ -134,6 +153,65 @@ namespace Kursach.main_windows.admin
                 {
                     MessageBox.Show($"Ошибка при удалении товара: {ex.Message}", "Ошибка");
                 }
+            }
+        }
+
+        private void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (FilterComboBox.SelectedItem is ComboBoxItem selectedItem)
+            {
+                string filterType = selectedItem.Content.ToString();
+
+                switch (filterType)
+                {
+                    case "Все товары":
+                        LoadProducts();
+                        break;
+
+                    case "Часто продаваемые":
+                        LoadFrequentProducts();
+                        break;
+
+                    case "Нечасто продаваемые":
+                        LoadInfrequentProducts();
+                        break;
+                }
+            }
+        }
+
+        private void LoadFrequentProducts()
+        {
+            try
+            {
+                var frequentProducts = Queries.GetProductsBySalesFrequency(adminUsername);
+
+                var filteredRows = frequentProducts.AsEnumerable()
+                    .Where(row => row.Field<int>("TotalSoldQuantity") > 5) 
+                    .CopyToDataTable();
+
+                ProductsDataGrid.ItemsSource = filteredRows.DefaultView;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}", "Ошибка");
+            }
+        }
+
+        private void LoadInfrequentProducts()
+        {
+            try
+            {
+                var infrequentProducts = Queries.GetProductsBySalesFrequency(adminUsername);
+
+                var filteredRows = infrequentProducts.AsEnumerable()
+                    .Where(row => row.Field<int>("TotalSoldQuantity") <= 10) 
+                    .CopyToDataTable();
+
+                ProductsDataGrid.ItemsSource = filteredRows.DefaultView;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}", "Ошибка");
             }
         }
 

@@ -226,11 +226,12 @@
           BorderThickness="0" GridLinesVisibility="None"
           Margin="20,0,20,20" CanUserAddRows="False" Grid.Row="1" MouseDoubleClick="SalesHistoryDataGrid_MouseDoubleClick">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="ID" Binding="{Binding SaleID}" Width="50" IsReadOnly="True" Visibility="Collapsed"/>
-                <DataGridTextColumn Header="Время продажи" Binding="{Binding SaleTime}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Товары" Binding="{Binding ProductsList}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Сумма" Binding="{Binding AdjustedTotal}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Пользователь" Binding="{Binding UserUsername}" Width="*" IsReadOnly="True"/>
+                <DataGridTextColumn Header="ID" Binding="{Binding TransactionID}" Width="50" />
+                <DataGridTextColumn Header="Тип" Binding="{Binding Type}" Width="100" />
+                <DataGridTextColumn Header="Клиент ID" Binding="{Binding CustomerID}" Width="80" />
+                <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="100" />
+                <DataGridTextColumn Header="Сумма" Binding="{Binding Total, StringFormat={}{0:F2} byn}" Width="100" />
+                <DataGridTextColumn Header="Дата" Binding="{Binding TransactionTime, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="150" />
             </DataGrid.Columns>
 
             <DataGrid.CellStyle>

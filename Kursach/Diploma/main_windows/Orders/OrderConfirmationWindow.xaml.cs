@@ -34,14 +34,14 @@ namespace Diploma.main_windows
 
                 if (existingCustomer.Rows.Count == 0)
                 {
-                    Queries.AddCustomer(_clientInfo.ClientName, clientEmail, _clientInfo.ContactInfo, adminUsername);
+                    Queries.AddOrUpdateCustomer(_clientInfo.ClientName, clientEmail, _clientInfo.ContactInfo);
                 }
 
                 int customerId = Queries.GetCustomerIdByEmail(clientEmail);
 
                 var selectedProductsList = _selectedProducts.AsEnumerable().ToList();
 
-                Queries.AddSale(selectedProductsList, totalAmount, customerId, adminUsername);
+                Queries.AddTransactionOrder(selectedProductsList, totalAmount, adminUsername, customerId, "Оформлен", "Заказ");
 
                 MessageBox.Show("Заказ успешно оформлен!", "Успех");
 

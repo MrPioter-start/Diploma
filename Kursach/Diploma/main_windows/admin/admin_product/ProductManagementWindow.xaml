@@ -27,6 +27,24 @@
                 Background="#63DD8D" Foreground="White" 
                 Height="40" Width="171" Padding="10,5" Cursor="Hand" 
                 BorderThickness="0" FontWeight="Bold" FontSize="14" Margin="10,0"/>
+
+                <ComboBox x:Name="FilterComboBox" Width="200" Margin="0" SelectionChanged="FilterComboBox_SelectionChanged" Height="40" SelectedIndex="0">
+                    <ComboBox.Style>
+                        <Style TargetType="ComboBox">
+                            <Setter Property="Background" Value="#FF3C3C3C"/>
+                            <Setter Property="Foreground" Value="Black"/>
+                            <Setter Property="FontSize" Value="14"/>
+                            <Setter Property="Padding" Value="10"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Setter Property="HorizontalAlignment" Value="Left"/>
+                            <Setter Property="VerticalAlignment" Value="Top"/>
+                        </Style>
+                    </ComboBox.Style>
+                    <ComboBoxItem Content="Все товары" />
+                    <ComboBoxItem Content="Часто продаваемые" />
+                    <ComboBoxItem Content="Нечасто продаваемые" />
+                </ComboBox>
             </StackPanel>
 
             <TextBlock Text="Список товаров" 

@@ -120,3 +120,5 @@ D:\Werehouse\Werehouse\Kursach\Diploma\obj\Debug\net8.0-windows7.0\main_windows\
 D:\Werehouse\Werehouse\Kursach\Diploma\obj\Debug\net8.0-windows7.0\main_windows\Orders\OrdersWindow.baml
 D:\Werehouse\Werehouse\Kursach\Diploma\obj\Debug\net8.0-windows7.0\main_windows\admin\Promotions\PromotionsManagementWindow.g.cs
 D:\Werehouse\Werehouse\Kursach\Diploma\obj\Debug\net8.0-windows7.0\main_windows\admin\Promotions\PromotionsManagementWindow.baml
+D:\Werehouse\Werehouse\Kursach\Diploma\obj\Debug\net8.0-windows7.0\main_windows\admin\TransactionDetailsWindow.g.cs
+D:\Werehouse\Werehouse\Kursach\Diploma\obj\Debug\net8.0-windows7.0\main_windows\admin\TransactionDetailsWindow.baml

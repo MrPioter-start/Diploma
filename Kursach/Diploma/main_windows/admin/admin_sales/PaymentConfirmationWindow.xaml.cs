@@ -55,14 +55,5 @@ namespace Kursach.main_windows.admin
             IsConfirmed = false;
             this.Close();
         }
-        private decimal CalculateTotalPrice(List<DataRow> selectedProducts)
-        {
-            decimal total = 0;
-            foreach (var row in selectedProducts)
-            {
-                total += row.Field<decimal>("Price") * row.Field<int>("OrderQuantity");
-            }
-            return total;
-        }
     }
 }

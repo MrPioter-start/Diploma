@@ -1,4 +1,5 @@
 ﻿using Diploma.main_windows;
+using Diploma.main_windows.admin;
 using Diploma.main_windows.admin.admin_product;
 using Diploma.main_windows.admin.Promotions;
 using Diploma.main_windows.admin.Reportes;
@@ -21,7 +22,7 @@ namespace Kursach
             InitializeComponent();
             this.adminUsername = username;
             InitializeCashRegister(adminUsername);
-            LoadSalesHistory();
+            LoadTransactionsHistory();
             LoadCashAmount();
             CheckLowStockNotification();
         }
@@ -56,10 +57,10 @@ namespace Kursach
             cashWindow.Closed += (s, ev) => Dispatcher.Invoke(LoadCashAmount);
             cashWindow.ShowDialog();
         }
-        private void LoadSalesHistory()
+        private void LoadTransactionsHistory()
         {
-            DataTable salesTable = Queries.GetSalesHistory(adminUsername);
-            SalesHistoryDataGrid.ItemsSource = salesTable.DefaultView;
+            DataTable transactionsTable = Queries.GetTransactionsHistory(adminUsername);
+            SalesHistoryDataGrid.ItemsSource = transactionsTable.DefaultView;
         }
         private void UserManagement(object sender, RoutedEventArgs e)
         {
@@ -84,21 +85,21 @@ namespace Kursach
             var salesWindow = new SalesWindow(adminUsername);
             salesWindow.Closed += (s, ev) => LoadCashAmount();
             salesWindow.ShowDialog();
-            LoadSalesHistory();
+            LoadTransactionsHistory();
         }
 
         private void SalesHistoryDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (SalesHistoryDataGrid.SelectedItem is DataRowView selectedRow)
             {
-                int saleId = Convert.ToInt32(selectedRow["SaleID"]);
+                int transactionId = Convert.ToInt32(selectedRow["TransactionID"]);
 
-                var returnWindow = new ReturnWindow(saleId, adminUsername);
-                returnWindow.Closed += (s, ev) => LoadCashAmount();
-                if (returnWindow.ShowDialog() == true)
-                {
-                    LoadSalesHistory();
-                }
+                // Получаем детали транзакции
+                DataTable transactionDetails = Queries.GetTransactionDetails(transactionId);
+
+                // Открываем окно с деталями
+                var detailsWindow = new TransactionDetailsWindow(transactionDetails);
+                detailsWindow.ShowDialog();
             }
         }
 
@@ -155,7 +156,7 @@ namespace Kursach
         {
             var Orders = new OrdersWindow(adminUsername);
             Orders.Closed += (s, ev) => Dispatcher.Invoke(LoadCashAmount);
-            Orders.Closed += (s, ev) => Dispatcher.Invoke(LoadSalesHistory);
+            Orders.Closed += (s, ev) => Dispatcher.Invoke(LoadTransactionsHistory);
             Orders.ShowDialog();
         }
 

@@ -23,8 +23,8 @@
 
         <!-- Список товаров -->
         <DataGrid x:Name="OrderProductsDataGrid" Grid.Row="1" AutoGenerateColumns="False" 
-                  Background="#FF3C3C3C" Foreground="White" BorderThickness="0" 
-                  Margin="20,10" CanUserAddRows="False" CanUserDeleteRows="False">
+          Background="#FF3C3C3C" Foreground="White" BorderThickness="0" 
+          Margin="20,10" CanUserAddRows="False" CanUserDeleteRows="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Наименование товара" Binding="{Binding Name}" Width="*" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Бренд" Binding="{Binding Brand}" Width="*" IsReadOnly="True"/>

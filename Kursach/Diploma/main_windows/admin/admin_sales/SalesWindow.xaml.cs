@@ -121,7 +121,10 @@ namespace Kursach.main_windows.admin
             foreach (var row in selectedProducts)
             {
                 string productName = row.Field<string>("Name");
-                int newQuantity = row.Field<int>("Quantity") - row.Field<int>("OrderQuantity");
+                int currentQuantity = row.Field<int>("Quantity");
+                int orderQuantity = row.Field<int>("OrderQuantity");
+
+                int newQuantity = currentQuantity - orderQuantity;
                 Queries.UpdateProductQuantity(productName, newQuantity);
             }
         }
@@ -257,8 +260,8 @@ namespace Kursach.main_windows.admin
 
             decimal originalTotal = CalculateTotalPrice(selectedProducts);
             decimal discountedTotal = ApplyDiscount(originalTotal);
-
             decimal paymentAmount = discountedTotal;
+
             if (!string.IsNullOrEmpty(PaymentAmountTextBox.Text))
             {
                 if (!decimal.TryParse(PaymentAmountTextBox.Text, out paymentAmount) || paymentAmount < discountedTotal)
@@ -268,15 +271,19 @@ namespace Kursach.main_windows.admin
                 }
             }
 
-            var paymentWindow = new PaymentConfirmationWindow(selectedProducts,originalTotal, discountedTotal, paymentAmount);
+            var paymentWindow = new PaymentConfirmationWindow(selectedProducts, originalTotal, discountedTotal, paymentAmount);
             paymentWindow.ShowDialog();
 
             if (paymentWindow.IsConfirmed)
             {
                 UpdateQuantities(selectedProducts);
-                Queries.AddSale(selectedProducts, discountedTotal, adminUsername);
-                Queries.UpdateCashAmount(discountedTotal, "Продажа", adminUsername); 
+
+                Queries.AddTransaction(selectedProducts, discountedTotal, adminUsername);
+
+                Queries.UpdateCashAmount(discountedTotal, "Продажа", adminUsername);
+
                 MessageBox.Show("Заказ успешно оплачен!", "Успех");
+
                 ResetForm();
             }
             else
@@ -308,11 +315,13 @@ namespace Kursach.main_windows.admin
                             ContactInfo = worksheet.Cells[2, 3].Text
                         };
 
+                        // Создаем таблицу для выбранных товаров
                         var selectedProducts = new DataTable();
-                        selectedProducts.Columns.Add("Name", typeof(string));
-                        selectedProducts.Columns.Add("Brand", typeof(string));
-                        selectedProducts.Columns.Add("OrderQuantity", typeof(int));
-                        selectedProducts.Columns.Add("Price", typeof(decimal));
+                        selectedProducts.Columns.Add("ProductID", typeof(int));
+                        selectedProducts.Columns.Add("Name", typeof(string)); // Наименование товара
+                        selectedProducts.Columns.Add("Brand", typeof(string)); // Бренд
+                        selectedProducts.Columns.Add("OrderQuantity", typeof(int)); // Количество
+                        selectedProducts.Columns.Add("Price", typeof(decimal)); // Цена
 
                         for (int row = 2; row <= worksheet.Dimension.Rows; row++)
                         {
@@ -330,12 +339,15 @@ namespace Kursach.main_windows.admin
 
                             if (productRow != null)
                             {
+                                int productID = productRow.Field<int>("ProductID");
                                 decimal price = productRow.Field<decimal>("Price");
-                                selectedProducts.Rows.Add(productName, brand, quantity, price);
+
+                                selectedProducts.Rows.Add(productID, productName, brand, quantity, price);
                             }
                         }
 
-                        var orderConfirmationWindow = new OrderConfirmationWindow(clientInfo, selectedProducts,adminUsername);
+                        // Открываем окно подтверждения заказа
+                        var orderConfirmationWindow = new OrderConfirmationWindow(clientInfo, selectedProducts, adminUsername);
                         orderConfirmationWindow.ShowDialog();
                     }
                 }

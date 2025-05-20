@@ -56,6 +56,9 @@
     <Compile Update="main_windows\admin\Reportes\ReportsHistoryWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="main_windows\admin\TransactionDetailsWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="main_windows\ManagerWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
