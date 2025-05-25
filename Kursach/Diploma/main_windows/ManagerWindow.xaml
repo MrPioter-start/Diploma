@@ -66,7 +66,7 @@
         <DataGrid x:Name="SalesHistoryDataGrid" AutoGenerateColumns="False" 
                   Background="#FF3C3C3C" Foreground="White" 
                   BorderThickness="0" GridLinesVisibility="None"
-                  Margin="20,0,20,20" CanUserAddRows="False" Grid.Row="1" MouseDoubleClick="SalesHistoryDataGrid_MouseDoubleClick">
+                  Margin="20,0,20,20" CanUserAddRows="False" Grid.Row="1">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="ID" Binding="{Binding SaleID}" Width="50" IsReadOnly="True" Visibility="Collapsed"/>
                 <DataGridTextColumn Header="Время продажи" Binding="{Binding SaleTime}" Width="*" IsReadOnly="True"/>

@@ -20,10 +20,11 @@ namespace Kursach.main_windows.admin
 
             var orderDetails = selectedProducts.Select(row => new
             {
-                Name = row.Field<string>("Name"),
-                OrderQuantity = row.Field<int>("OrderQuantity"),
+                ProductID = row.Field<int>("ProductID"),
+                Name = row.Field<string?>("Name") ?? "Неизвестно",
+                Quantity = row.Field<int>("Quantity"),
                 Price = row.Field<decimal>("Price"),
-                Total = row.Field<decimal>("Price") * row.Field<int>("OrderQuantity")
+                Total = row.Field<decimal>("Price") * row.Field<int>("Quantity")
             }).ToList();
 
             OrderDetailsDataGrid.ItemsSource = orderDetails;
@@ -32,23 +33,31 @@ namespace Kursach.main_windows.admin
             DiscountTextBlock.Text = $"Скидка: {(originalTotal - discountedTotal):F2} byn";
             TotalPriceTextBlock.Text = $"Итого с учетом скидки: {discountedTotal:F2} byn";
 
-            if (paymentAmount > discountedTotal)
+            if (paymentAmount >= discountedTotal)
             {
                 PaymentAmountTextBlock.Text = $"{paymentAmount:F2} byn";
                 ChangeTextBlock.Text = $"{(paymentAmount - discountedTotal):F2} byn";
             }
             else
             {
-                PaymentAmountTextBlock.Text = "Не указана";
-                ChangeTextBlock.Text = "0.00 byn";
+                PaymentAmountTextBlock.Text = $"{paymentAmount:F2} byn";
+                ChangeTextBlock.Text = "Недостаточно средств";
             }
         }
 
         private void Pay_Click(object sender, RoutedEventArgs e)
         {
+            if (paymentAmount < discountedTotal)
+            {
+                MessageBox.Show("Внесенная сумма меньше стоимости заказа.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             IsConfirmed = true;
+            this.DialogResult = true;
             this.Close();
         }
+
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {

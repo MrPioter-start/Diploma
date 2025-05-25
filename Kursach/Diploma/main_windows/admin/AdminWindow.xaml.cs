@@ -59,8 +59,22 @@ namespace Kursach
         }
         private void LoadTransactionsHistory()
         {
-            DataTable transactionsTable = Queries.GetTransactionsHistory(adminUsername);
-            SalesHistoryDataGrid.ItemsSource = transactionsTable.DefaultView;
+            try
+            {
+                var transactionsTable = Queries.GetTransactionsHistory(adminUsername);
+
+                if (transactionsTable == null || transactionsTable.Rows.Count == 0)
+                {
+                    SalesHistoryDataGrid.ItemsSource = null;
+                    return;
+                }
+
+                SalesHistoryDataGrid.ItemsSource = transactionsTable.DefaultView;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки данных о транзакциях: {ex.Message}", "Ошибка");
+            }
         }
         private void UserManagement(object sender, RoutedEventArgs e)
         {
@@ -92,14 +106,21 @@ namespace Kursach
         {
             if (SalesHistoryDataGrid.SelectedItem is DataRowView selectedRow)
             {
-                int transactionId = Convert.ToInt32(selectedRow["TransactionID"]);
+                try
+                {
+                    int transactionId = Convert.ToInt32(selectedRow["TransactionID"]);
 
-                // Получаем детали транзакции
-                DataTable transactionDetails = Queries.GetTransactionDetails(transactionId);
+                    DataTable transactionDetails = Queries.GetTransactionDetails(transactionId);
 
-                // Открываем окно с деталями
-                var detailsWindow = new TransactionDetailsWindow(transactionDetails);
-                detailsWindow.ShowDialog();
+                    var detailsWindow = new TransactionDetailsWindow(transactionDetails, transactionId, adminUsername);
+                    detailsWindow.Closed += (s, ev) => LoadCashAmount();
+                    detailsWindow.Closed += (s, ev) => LoadTransactionsHistory();
+                    detailsWindow.ShowDialog();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при открытии окна деталей: {ex.Message}", "Ошибка");
+                }
             }
         }
 

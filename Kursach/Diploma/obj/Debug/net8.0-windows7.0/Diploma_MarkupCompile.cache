@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
 D:\Werehouse\Werehouse\Kursach\Diploma\App.xaml
-28-1783371379
+281285562019
 11632931675
-382114168063
-228-1388455352
-login_registration\LoginWindow.xaml;login_registration\RegisterWindow.xaml;MainWindow.xaml;main_windows\admin\AdminWindow.xaml;main_windows\admin\admin_cash\CashHistoryWindow.xaml;main_windows\admin\admin_cash\CashManagementWindow.xaml;main_windows\admin\admin_codes\AdminCodeManagementWindow.xaml;main_windows\admin\admin_codes\UserManagementWindow.xaml;main_windows\admin\admin_codes\ViewCodesWindow.xaml;main_windows\admin\admin_product\AddProductWindow.xaml;main_windows\admin\admin_product\CategoryManagementWindow.xaml;main_windows\admin\admin_product\EditProductWindow.xaml;main_windows\admin\admin_product\LowStockNotificationWindow.xaml;main_windows\admin\admin_product\ProductManagementWindow.xaml;main_windows\admin\admin_returns\ReturnHistoryWindow.xaml;main_windows\admin\admin_returns\ReturnWindow.xaml;main_windows\admin\admin_sales\PaymentConfirmationWindow.xaml;main_windows\admin\admin_sales\SalesWindow.xaml;main_windows\admin\Promotions\PromotionsManagementWindow.xaml;main_windows\admin\Reportes\Reportes.xaml;main_windows\admin\Reportes\ReportsHistoryWindow.xaml;main_windows\admin\TransactionDetailsWindow.xaml;main_windows\ManagerWindow.xaml;main_windows\Orders\OrderConfirmationWindow.xaml;main_windows\Orders\OrderConfirmationWindow2.xaml;main_windows\Orders\OrdersWindow.xaml;main_windows\SalesWindowManager.xaml;main_windows\UserWindow.xaml;
+37-769410421
+230-1881211367
+login_registration\LoginWindow.xaml;login_registration\RegisterWindow.xaml;MainWindow.xaml;main_windows\admin\AdminWindow.xaml;main_windows\admin\admin_cash\CashHistoryWindow.xaml;main_windows\admin\admin_cash\CashManagementWindow.xaml;main_windows\admin\admin_codes\AdminCodeManagementWindow.xaml;main_windows\admin\admin_codes\UserManagementWindow.xaml;main_windows\admin\admin_codes\ViewCodesWindow.xaml;main_windows\admin\admin_product\AddProductWindow.xaml;main_windows\admin\admin_product\CategoryManagementWindow.xaml;main_windows\admin\admin_product\EditProductWindow.xaml;main_windows\admin\admin_product\LowStockNotificationWindow.xaml;main_windows\admin\admin_product\ProductManagementWindow.xaml;main_windows\admin\admin_returns\ReturnHistoryWindow.xaml;main_windows\admin\admin_returns\ReturnWindow.xaml;main_windows\admin\admin_sales\Orders\OrderConfirmationWindow.xaml;main_windows\admin\admin_sales\Orders\OrderConfirmationWindow2.xaml;main_windows\admin\admin_sales\Orders\OrdersWindow.xaml;main_windows\admin\admin_sales\PaymentConfirmationWindow.xaml;main_windows\admin\admin_sales\SalesWindow.xaml;main_windows\admin\Promotions\PromotionsManagementWindow.xaml;main_windows\admin\Reportes\Reportes.xaml;main_windows\admin\Reportes\ReportsHistoryWindow.xaml;main_windows\admin\Reportes\TransactionDetailsWindow.xaml;main_windows\ManagerWindow.xaml;main_windows\SalesWindowManager.xaml;main_windows\UserWindow.xaml;
 
 False
 

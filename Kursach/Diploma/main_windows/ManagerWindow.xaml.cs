@@ -45,20 +45,29 @@ namespace Kursach.main_windows
             LoadSalesHistory();
         }
 
-        private void SalesHistoryDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (SalesHistoryDataGrid.SelectedItem is DataRowView selectedRow)
-            {
-                int saleId = Convert.ToInt32(selectedRow["SaleID"]);
+        //private void SalesHistoryDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        //{
+        //    if (SalesHistoryDataGrid.SelectedItem is DataRowView selectedRow)
+        //    {
+        //        try
+        //        {
+        //            int saleId = Convert.ToInt32(selectedRow["SaleID"]);
 
-                var returnWindow = new ReturnWindow(saleId, adminUsername);
-                returnWindow.Closed += (s, ev) => LoadCashAmount();
-                if (returnWindow.ShowDialog() == true)
-                {
-                    LoadSalesHistory();
-                }
-            }
-        }
+        //            var returnWindow = new ReturnWindow(saleId, adminUsername);
+
+        //            returnWindow.Closed += (s, ev) => LoadCashAmount();
+
+        //            if (returnWindow.ShowDialog() == true)
+        //            {
+        //                LoadSalesHistory();
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            MessageBox.Show($"Ошибка при открытии окна возврата: {ex.Message}", "Ошибка");
+        //        }
+        //    }
+        //}
 
     }
 }

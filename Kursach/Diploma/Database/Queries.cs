@@ -72,28 +72,29 @@ namespace Kursach.Database
             });
         }
 
-        public static int AddOrUpdateCustomer(string name, string email, string contactInfo)
+        public static int AddOrUpdateCustomer(string name, string email, string contactInfo, string adminUsername)
         {
             string query = @"
-        IF NOT EXISTS (SELECT 1 FROM Customers WHERE Email = @Email)
-        BEGIN
-            INSERT INTO Customers (Name, Email, ContactInfo, TotalOrders)
-            VALUES (@Name, @Email, @ContactInfo, 0);
-        END
-        ELSE
-        BEGIN
-            UPDATE Customers
-            SET Name = @Name, ContactInfo = @ContactInfo
-            WHERE Email = @Email;
-        END
+IF NOT EXISTS (SELECT 1 FROM Customers WHERE Email = @Email AND AdminUsername = @AdminUsername)
+BEGIN
+    INSERT INTO Customers (Name, Email, ContactInfo, TotalOrders, AdminUsername)
+    VALUES (@Name, @Email, @ContactInfo, 0, @AdminUsername);
+END
+ELSE
+BEGIN
+    UPDATE Customers
+    SET Name = @Name, ContactInfo = @ContactInfo
+    WHERE Email = @Email AND AdminUsername = @AdminUsername;
+END
 
-        SELECT CustomerID FROM Customers WHERE Email = @Email;";
+SELECT CustomerID FROM Customers WHERE Email = @Email AND AdminUsername = @AdminUsername;";
 
             return Convert.ToInt32(DatabaseHelper.ExecuteScalar(query, command =>
             {
                 command.Parameters.AddWithValue("@Name", name);
                 command.Parameters.AddWithValue("@Email", email);
                 command.Parameters.AddWithValue("@ContactInfo", contactInfo);
+                command.Parameters.AddWithValue("@AdminUsername", adminUsername); // Добавляем параметр AdminUsername
             }));
         }
 
@@ -162,50 +163,38 @@ namespace Kursach.Database
             });
         }
 
-        public static void ReturnProduct(int returnQuantity, int transactionId, int productId)
-        {
-            // Обновляем количество товара на складе
-            string updateProductQuery = @"
-        UPDATE Products 
-        SET Quantity = Quantity + @ReturnQuantity 
-        WHERE ProductID = @ProductID";
-
-            DatabaseHelper.ExecuteNonQuery(updateProductQuery, command =>
-            {
-                command.Parameters.AddWithValue("@ReturnQuantity", returnQuantity);
-                command.Parameters.AddWithValue("@ProductID", productId);
-            });
-
-            // Обновляем детали транзакции
-            string updateDetailsQuery = @"
-        UPDATE TransactionDetails 
-        SET Quantity = Quantity - @ReturnQuantity 
-        WHERE TransactionID = @TransactionID AND ProductID = @ProductID";
-
-            DatabaseHelper.ExecuteNonQuery(updateDetailsQuery, command =>
-            {
-                command.Parameters.AddWithValue("@ReturnQuantity", returnQuantity);
-                command.Parameters.AddWithValue("@TransactionID", transactionId);
-                command.Parameters.AddWithValue("@ProductID", productId);
-            });
-        }
-
         public static DataTable GetTransactionsHistory(string adminUsername)
         {
+            if (string.IsNullOrWhiteSpace(adminUsername))
+            {
+                throw new ArgumentException("Имя пользователя администратора не может быть пустым.");
+            }
+
             string query = @"
-        SELECT 
-            TransactionID,
-            Type,
-            CustomerID,
-            Status,
-            Total,
-            TransactionTime
-        FROM 
-            Transactions
-        WHERE 
-            CreatedBy = @CreatedBy
-        ORDER BY 
-            TransactionTime DESC";
+SELECT 
+    t.TransactionID,
+    t.Type,
+    CASE 
+        WHEN c.CustomerID IS NULL THEN 'None' -- Если клиент отсутствует
+        ELSE c.Name -- Имя клиента
+    END AS CustomerName,
+    CASE 
+        WHEN t.Status IS NULL THEN 'Завершен' -- Если статус отсутствует
+        ELSE t.Status
+    END AS Status,
+    t.Total,
+    t.TransactionTime,
+    u.Username AS CreatedBy -- Имя администратора, который создал транзакцию
+FROM 
+    Transactions t
+LEFT JOIN 
+    Customers c ON t.CustomerID = c.CustomerID -- LEFT JOIN для обработки случаев без клиента
+INNER JOIN 
+    Users u ON t.CreatedBy = u.Username
+WHERE 
+    t.CreatedBy = @CreatedBy
+ORDER BY 
+    t.TransactionTime DESC";
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
@@ -1142,36 +1131,141 @@ ORDER BY
         public static DataTable GetSaleDetails(int saleId)
         {
             string query = @"
-        SELECT 
-            ProductName,
-            Quantity,
-            Price,
-            0 AS ReturnQuantity
-        FROM SaleDetails
-        WHERE SaleID = @SaleID";
+SELECT 
+    td.ProductID,
+    p.Name AS ProductName,
+    td.Quantity,
+    p.Price
+FROM 
+    TransactionDetails td
+INNER JOIN 
+    Products p ON td.ProductID = p.ProductID
+WHERE 
+    td.TransactionID = @TransactionID";
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
-                command.Parameters.AddWithValue("@SaleID", saleId);
+                command.Parameters.AddWithValue("@TransactionID", saleId);
             });
         }
 
         [Obsolete]
-        public static void AddReturn(int saleId, string productName, int quantity, string adminUsername)
+        public static void AddReturn(int transactionId, string productName, int quantity, string adminUsername)
         {
             string query = @"
-        INSERT INTO Returns (SaleID, ProductName, ReturnedQuantity, ReturnTime, AdminUsername) 
-        VALUES (@SaleID, @ProductName, @ReturnedQuantity, @ReturnTime, @AdminUsername)";
+    INSERT INTO Returns (TransactionID, ProductName, ReturnedQuantity, ReturnTime, AdminUsername) 
+    VALUES (@TransactionID, @ProductName, @ReturnedQuantity, @ReturnTime, @AdminUsername)";
 
             DatabaseHelper.ExecuteNonQuery(query, command =>
             {
-                command.Parameters.AddWithValue("@SaleID", saleId);
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
                 command.Parameters.AddWithValue("@ProductName", productName);
                 command.Parameters.AddWithValue("@ReturnedQuantity", quantity);
                 command.Parameters.AddWithValue("@ReturnTime", DateTime.Now);
                 command.Parameters.AddWithValue("@AdminUsername", adminUsername);
             });
         }
+
+
+        private static void UpdateCashAmount(int returnQuantity, string productName, string adminUsername)
+        {
+            decimal productPrice = GetProductPrice(productName);
+
+            decimal refundAmount = productPrice * returnQuantity;
+
+            Queries.UpdateCashAmount(-refundAmount, "Возврат", adminUsername);
+        }
+
+        public static void UpdateTransactionTotal(int transactionId)
+        {
+            string query = @"
+UPDATE Transactions
+SET Total = (
+    SELECT SUM(Quantity * Price)
+    FROM TransactionDetails
+    WHERE TransactionID = @TransactionID
+)
+WHERE TransactionID = @TransactionID";
+
+            DatabaseHelper.ExecuteNonQuery(query, command =>
+            {
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
+            });
+        }
+
+
+        private static decimal GetProductPrice(string productName)
+        {
+            string query = @"
+SELECT Price 
+FROM Products 
+WHERE Name = @ProductName";
+
+            return Convert.ToDecimal(DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@ProductName", productName);
+            }));
+        }
+
+        private static bool TransactionExists(int transactionId)
+        {
+            string query = @"
+SELECT COUNT(*) 
+FROM Transactions 
+WHERE TransactionID = @TransactionID";
+
+            return Convert.ToInt32(DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
+            })) > 0;
+        }
+
+        public static void ReturnProduct(string productName, int returnQuantity, int transactionId)
+        {
+            // Получаем ProductID
+            int productId = GetProductIdByName(productName);
+            if (productId == -1)
+            {
+                throw new Exception($"Товар с именем {productName} не найден.");
+            }
+
+            string updateProductQuery = @"
+UPDATE Products 
+SET Quantity = Quantity + @ReturnQuantity 
+WHERE ProductID = @ProductID";
+
+            DatabaseHelper.ExecuteNonQuery(updateProductQuery, command =>
+            {
+                command.Parameters.AddWithValue("@ReturnQuantity", returnQuantity);
+                command.Parameters.AddWithValue("@ProductID", productId);
+            });
+
+            string updateTransactionDetailsQuery = @"
+UPDATE TransactionDetails 
+SET Quantity = Quantity - @ReturnQuantity 
+WHERE TransactionID = @TransactionID AND ProductID = @ProductID";
+
+            DatabaseHelper.ExecuteNonQuery(updateTransactionDetailsQuery, command =>
+            {
+                command.Parameters.AddWithValue("@ReturnQuantity", returnQuantity);
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
+                command.Parameters.AddWithValue("@ProductID", productId);
+            });
+
+            UpdateTransactionTotal(transactionId);
+        }
+
+        private static int GetProductIdByName(string productName)
+        {
+            string query = "SELECT ProductID FROM Products WHERE Name = @ProductName";
+            object result = DatabaseHelper.ExecuteScalar(query, cmd =>
+            {
+                cmd.Parameters.AddWithValue("@ProductName", productName);
+            });
+
+            return result != null ? Convert.ToInt32(result) : -1;
+        }
+
 
         [Obsolete]
         public static DataTable GetSalesHistory(string adminUsername)
@@ -1205,33 +1299,6 @@ ORDER BY
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
                 command.Parameters.AddWithValue("@UserUsername", adminUsername);
-            });
-        }
-
-        [Obsolete]
-        public static void ReturnProduct(string productName, int returnQuantity, int saleId)
-        {
-            string updateProductQuery = @"
-        UPDATE Products 
-        SET Quantity = Quantity + @ReturnQuantity 
-        WHERE Name = @ProductName";
-
-            DatabaseHelper.ExecuteNonQuery(updateProductQuery, command =>
-            {
-                command.Parameters.AddWithValue("@ReturnQuantity", returnQuantity);
-                command.Parameters.AddWithValue("@ProductName", productName);
-            });
-
-            string updateSaleDetailsQuery = @"
-        UPDATE SaleDetails 
-        SET Quantity = Quantity - @ReturnQuantity 
-        WHERE SaleID = @SaleID AND ProductName = @ProductName";
-
-            DatabaseHelper.ExecuteNonQuery(updateSaleDetailsQuery, command =>
-            {
-                command.Parameters.AddWithValue("@ReturnQuantity", returnQuantity);
-                command.Parameters.AddWithValue("@SaleID", saleId);
-                command.Parameters.AddWithValue("@ProductName", productName);
             });
         }
 

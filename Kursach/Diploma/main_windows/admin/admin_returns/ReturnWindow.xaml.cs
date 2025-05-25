@@ -3,6 +3,7 @@ using System.Data;
 using System.Linq;
 using Kursach.Database;
 using System.Windows.Controls;
+using System.Transactions;
 
 namespace Kursach.main_windows.admin
 {
@@ -12,22 +13,30 @@ namespace Kursach.main_windows.admin
         private DataTable returnItemsTable;
         private string userUsername;
 
-        public ReturnWindow(int saleId, string userUsername)
+        public ReturnWindow(int saleId, DataTable transactionDetails, string userUsername)
         {
             InitializeComponent();
             this.saleId = saleId;
-            LoadReturnItems();
+            this.returnItemsTable = PrepareReturnItemsTable(transactionDetails);
             this.userUsername = userUsername;
+
+            ReturnItemsDataGrid.ItemsSource = returnItemsTable.DefaultView;
         }
 
-        private void LoadReturnItems()
+        private DataTable PrepareReturnItemsTable(DataTable transactionDetails)
         {
-            returnItemsTable = Queries.GetSaleDetails(saleId);
-            foreach (DataRow row in returnItemsTable.Rows)
+            var table = transactionDetails.Clone();
+            table.Columns.Add("ReturnQuantity", typeof(int));
+
+            foreach (DataRow row in transactionDetails.Rows)
             {
-                row["ReturnQuantity"] = 0;
+                var newRow = table.NewRow();
+                newRow.ItemArray = row.ItemArray;
+                newRow["ReturnQuantity"] = 0;
+                table.Rows.Add(newRow);
             }
-            ReturnItemsDataGrid.ItemsSource = returnItemsTable.DefaultView;
+
+            return table;
         }
 
         private void IncreaseReturnQuantity_Click(object sender, RoutedEventArgs e)
@@ -67,25 +76,25 @@ namespace Kursach.main_windows.admin
 
         private void ConfirmReturn_Click(object sender, RoutedEventArgs e)
         {
-            var rowsToReturn = returnItemsTable.AsEnumerable()
-                .Where(row => row.Field<int>("ReturnQuantity") > 0)
-                .ToList();
-
-            if (rowsToReturn.Count == 0)
-            {
-                MessageBox.Show("Нет товаров для возврата.", "Ошибка");
-                return;
-            }
-
             try
             {
+                var rowsToReturn = returnItemsTable.AsEnumerable()
+                    .Where(row => row.Field<int>("ReturnQuantity") > 0)
+                    .ToList();
+
+                if (rowsToReturn.Count == 0)
+                {
+                    MessageBox.Show("Нет товаров для возврата.", "Ошибка");
+                    return;
+                }
+
                 decimal totalRefundAmount = 0;
 
                 foreach (var row in rowsToReturn)
                 {
                     string productName = row.Field<string>("ProductName");
                     int returnQuantity = row.Field<int>("ReturnQuantity");
-                    decimal soldPrice = row.Field<decimal>("Price"); 
+                    decimal soldPrice = row.Field<decimal>("Price");
                     decimal refundAmount = soldPrice * returnQuantity;
 
                     decimal currentCash = Queries.GetCurrentCashAmount(userUsername);
@@ -97,6 +106,8 @@ namespace Kursach.main_windows.admin
 
                     totalRefundAmount += refundAmount;
 
+                    Queries.UpdateTransactionTotal(saleId);
+
                     Queries.ReturnProduct(productName, returnQuantity, saleId);
                     Queries.AddReturn(saleId, productName, returnQuantity, userUsername);
                 }
@@ -104,7 +115,10 @@ namespace Kursach.main_windows.admin
                 Queries.UpdateCashAmount(-totalRefundAmount, "Возврат", userUsername);
 
                 MessageBox.Show("Товар успешно возвращен!", "Успех");
+
                 this.DialogResult = true;
+
+                this.Close();
             }
             catch (Exception ex)
             {

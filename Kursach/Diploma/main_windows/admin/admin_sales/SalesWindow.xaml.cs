@@ -7,6 +7,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using ExcelDataReader;
 using System.Windows.Controls;
 
 namespace Kursach.main_windows.admin
@@ -266,52 +267,87 @@ namespace Kursach.main_windows.admin
 
         private void ConfirmOrder_Click(object sender, RoutedEventArgs e)
         {
-            if (productsTable == null)
-                return;
-
-            var selectedProducts = productsTable.AsEnumerable()
-                .Where(row => row.Field<int>("OrderQuantity") > 0)
-                .ToList();
-
-            if (selectedProducts.Count == 0)
+            try
             {
-                MessageBox.Show("Нет выбранных товаров.", "Ошибка");
-                return;
-            }
+                if (productsTable == null)
+                    return;
 
-            decimal originalTotal = CalculateTotalPrice(selectedProducts);
-            decimal discountedTotal = ApplyDiscount(originalTotal);
-            decimal paymentAmount = discountedTotal;
+                // Фильтруем товары с OrderQuantity > 0
+                var selectedProducts = productsTable.AsEnumerable()
+                    .Where(row => row.Field<int>("OrderQuantity") > 0)
+                    .ToList();
 
-            if (!string.IsNullOrEmpty(PaymentAmountTextBox.Text))
-            {
-                if (!decimal.TryParse(PaymentAmountTextBox.Text, out paymentAmount) || paymentAmount < discountedTotal)
+                if (selectedProducts.Count == 0)
                 {
-                    MessageBox.Show("Введите корректную сумму для оплаты.", "Ошибка");
+                    MessageBox.Show("Нет выбранных товаров.", "Ошибка");
                     return;
                 }
+
+                // Создаем новую таблицу с необходимыми колонками
+                var formattedProducts = new DataTable();
+                formattedProducts.Columns.Add("ProductID", typeof(int));
+                formattedProducts.Columns.Add("Name", typeof(string));
+                formattedProducts.Columns.Add("OrderQuantity", typeof(int));
+                formattedProducts.Columns.Add("Price", typeof(decimal));
+
+                foreach (var row in selectedProducts)
+                {
+                    var newRow = formattedProducts.NewRow();
+                    newRow["ProductID"] = row.Field<int>("ProductID"); // Убедитесь, что колонка ProductID существует
+                    newRow["Name"] = row.Field<string>("Name");
+                    newRow["OrderQuantity"] = row.Field<int>("OrderQuantity");
+                    newRow["Price"] = row.Field<decimal>("Price");
+                    formattedProducts.Rows.Add(newRow);
+                }
+
+                // Преобразуем данные в List<DataRow>
+                var formattedProductsList = formattedProducts.AsEnumerable().ToList();
+
+                // Подсчитываем общую сумму
+                decimal originalTotal = CalculateTotalPrice(formattedProductsList);
+                decimal discountedTotal = ApplyDiscount(originalTotal);
+                decimal paymentAmount = discountedTotal;
+
+                // Проверяем введенную сумму оплаты
+                if (!string.IsNullOrEmpty(PaymentAmountTextBox.Text))
+                {
+                    if (!decimal.TryParse(PaymentAmountTextBox.Text, out paymentAmount) || paymentAmount < discountedTotal)
+                    {
+                        MessageBox.Show("Введите корректную сумму для оплаты.", "Ошибка");
+                        return;
+                    }
+                }
+
+                // Открываем окно подтверждения
+                var paymentWindow = new PaymentConfirmationWindow(formattedProductsList, originalTotal, discountedTotal, paymentAmount);
+                bool? result = paymentWindow.ShowDialog();
+
+                if (result == true && paymentWindow.IsConfirmed)
+                {
+                    // Обновляем количество товаров
+                    UpdateQuantities(formattedProductsList);
+
+                    // Добавляем транзакцию
+                    Queries.AddTransaction(formattedProductsList, discountedTotal, adminUsername);
+
+                    // Обновляем баланс кассы
+                    Queries.UpdateCashAmount(discountedTotal, "Продажа", adminUsername);
+
+                    MessageBox.Show("Заказ успешно оплачен!", "Успех");
+
+                    ResetForm();
+                }
+                else
+                {
+                    MessageBox.Show("Оплата отменена.", "Информация");
+                }
             }
-
-            var paymentWindow = new PaymentConfirmationWindow(selectedProducts, originalTotal, discountedTotal, paymentAmount);
-            paymentWindow.ShowDialog();
-
-            if (paymentWindow.IsConfirmed)
+            catch (Exception ex)
             {
-                UpdateQuantities(selectedProducts);
-
-                Queries.AddTransaction(selectedProducts, discountedTotal, adminUsername);
-
-                Queries.UpdateCashAmount(discountedTotal, "Продажа", adminUsername);
-
-                MessageBox.Show("Заказ успешно оплачен!", "Успех");
-
-                ResetForm();
-            }
-            else
-            {
-                MessageBox.Show("Оплата отменена.", "Информация");
+                MessageBox.Show($"Ошибка при подтверждении заказа: {ex.Message}", "Ошибка");
             }
         }
+
 
         private void LoadOrderFromExcel_Click(object sender, RoutedEventArgs e)
         {
@@ -329,6 +365,7 @@ namespace Kursach.main_windows.admin
                     using (var package = new ExcelPackage(new FileInfo(dialog.FileName)))
                     {
                         var worksheet = package.Workbook.Worksheets[0];
+
                         var clientInfo = new
                         {
                             ClientName = worksheet.Cells[2, 1].Text,
@@ -343,19 +380,23 @@ namespace Kursach.main_windows.admin
                         selectedProducts.Columns.Add("OrderQuantity", typeof(int));
                         selectedProducts.Columns.Add("Price", typeof(decimal));
 
+                        var productsTable = Queries.GetProductsBySalesFrequency(adminUsername);
+
                         for (int row = 2; row <= worksheet.Dimension.Rows; row++)
                         {
-                            string productName = worksheet.Cells[row, 4].Text;
-                            string brand = worksheet.Cells[row, 5].Text;
-                            string quantityStr = worksheet.Cells[row, 6].Text;
+                            string productName = worksheet.Cells[row, 4].Text.Trim();
+                            string brand = worksheet.Cells[row, 5].Text.Trim();
+                            string quantityStr = worksheet.Cells[row, 6].Text.Trim();
 
-                            if (!int.TryParse(quantityStr, out int quantity))
+                            if (!int.TryParse(quantityStr, out int quantity) || quantity <= 0)
                             {
-                                continue;
+                                continue; 
                             }
 
                             var productRow = productsTable.AsEnumerable()
-                                .FirstOrDefault(p => p.Field<string>("Name") == productName);
+                                .FirstOrDefault(p =>
+                                    p.Field<string>("Name").Equals(productName, StringComparison.OrdinalIgnoreCase) &&
+                                    p.Field<string>("Brand").Equals(brand, StringComparison.OrdinalIgnoreCase));
 
                             if (productRow != null)
                             {
@@ -364,10 +405,21 @@ namespace Kursach.main_windows.admin
 
                                 selectedProducts.Rows.Add(productID, productName, brand, quantity, price);
                             }
+                            else
+                            {
+                                MessageBox.Show($"Продукт '{productName}' с брендом '{brand}' не найден.", "Предупреждение");
+                            }
                         }
 
-                        var orderConfirmationWindow = new OrderConfirmationWindow(clientInfo, selectedProducts, adminUsername);
-                        orderConfirmationWindow.ShowDialog();
+                        if (selectedProducts.Rows.Count > 0)
+                        {
+                            var orderConfirmationWindow = new OrderConfirmationWindow(clientInfo, selectedProducts, adminUsername);
+                            orderConfirmationWindow.ShowDialog();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Нет доступных продуктов для создания заказа.", "Предупреждение");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -493,7 +545,7 @@ namespace Kursach.main_windows.admin
             }
 
             var infrequentProducts = allProducts.AsEnumerable()
-                .Where(row => row.Field<int>("TotalSoldQuantity") < 10) // меньше 10
+                .Where(row => row.Field<int>("TotalSoldQuantity") < 10) 
                 .CopyToDataTable();
 
             if (!infrequentProducts.Columns.Contains("OrderQuantity"))
@@ -509,8 +561,5 @@ namespace Kursach.main_windows.admin
             ProductsDataGrid.ItemsSource = productsTable.DefaultView;
             UpdateTotalPrice();
         }
-
-
-
     }
 }

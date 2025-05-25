@@ -224,25 +224,26 @@
         <DataGrid x:Name="SalesHistoryDataGrid" AutoGenerateColumns="False" 
           Background="#FF3C3C3C" Foreground="White" 
           BorderThickness="0" GridLinesVisibility="None"
-          Margin="20,0,20,20" CanUserAddRows="False" Grid.Row="1" MouseDoubleClick="SalesHistoryDataGrid_MouseDoubleClick">
+          Margin="20,0,20,20" CanUserAddRows="False" Grid.Row="1" MouseDoubleClick="SalesHistoryDataGrid_MouseDoubleClick" IsReadOnly="True" HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Stretch">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="ID" Binding="{Binding TransactionID}" Width="50" />
-                <DataGridTextColumn Header="Тип" Binding="{Binding Type}" Width="100" />
-                <DataGridTextColumn Header="Клиент ID" Binding="{Binding CustomerID}" Width="80" />
-                <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="100" />
-                <DataGridTextColumn Header="Сумма" Binding="{Binding Total, StringFormat={}{0:F2} byn}" Width="100" />
-                <DataGridTextColumn Header="Дата" Binding="{Binding TransactionTime, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="150" />
+                <DataGridTextColumn Header="ID" Binding="{Binding TransactionID}" Width="*" Visibility="Hidden"/>
+                <DataGridTextColumn Header="Тип" Binding="{Binding Type}" Width="*" />
+                <DataGridTextColumn Header="Клиент" Binding="{Binding CustomerName}" Width="*" />
+                <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="*" />
+                <DataGridTextColumn Header="Сумма" Binding="{Binding Total, StringFormat={}{0:F2} byn}" Width="*" />
+                <DataGridTextColumn Header="Дата" Binding="{Binding TransactionTime, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="*" />
+                <DataGridTextColumn Header="Продавец" Binding="{Binding CreatedBy}" Width="*" />
             </DataGrid.Columns>
 
             <DataGrid.CellStyle>
                 <Style TargetType="DataGridCell">
-                    <Setter Property="BorderThickness" Value="0"/>
-                    <Setter Property="Padding" Value="10"/>
-                    <Setter Property="FontSize" Value="14"/>
-                    <Setter Property="Foreground" Value="White"/>
-                    <Setter Property="Background" Value="#FF3C3C3C"/>
-                    <Setter Property="HorizontalAlignment" Value="Left"/>
-                    <Setter Property="Margin" Value="10,0,0,0" />
+                    <Setter Property="Padding" Value="5,10" />
+                    <Setter Property="BorderThickness" Value="0,0,0,1" />
+                    <Setter Property="BorderBrush" Value="#FF555555" />
+                    <Setter Property="Padding" Value="8,0,0,0" />
+                    <Setter Property="Focusable" Value="False" />
+                    <Setter Property="IsTabStop" Value="False" />
                 </Style>
             </DataGrid.CellStyle>
 
@@ -252,7 +253,7 @@
                     <Setter Property="Foreground" Value="White"/>
                     <Setter Property="FontWeight" Value="Bold"/>
                     <Setter Property="FontSize" Value="16"/>
-                    <Setter Property="Padding" Value="10"/>
+                    <Setter Property="Padding" Value="4,10,10,10"/>
                     <Setter Property="BorderThickness" Value="0"/>
                     <Setter Property="HorizontalContentAlignment" Value="Left"/>
                 </Style>
@@ -260,10 +261,14 @@
 
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
-                    <Setter Property="Background" Value="#FF3C3C3C"/>
-                    <Setter Property="Foreground" Value="White"/>
-                    <Setter Property="FontSize" Value="14"/>
-                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Background" Value="#FF3C3C3C" />
+                    <Setter Property="Foreground" Value="White" />
+                    <Setter Property="FontSize" Value="14" />
+                    <Style.Triggers>
+                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                            <Setter Property="Background" Value="#FF4D4D4D" />
+                        </Trigger>
+                    </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
         </DataGrid>

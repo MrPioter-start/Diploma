@@ -3,6 +3,26 @@
   "WorkspaceRootPath": "D:\\Werehouse\\Werehouse\\Kursach\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|d:\\werehouse\\werehouse\\kursach\\diploma\\main_windows\\admin\\admin_sales\\saleswindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|solutionrelative:diploma\\main_windows\\admin\\admin_sales\\saleswindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|d:\\werehouse\\werehouse\\kursach\\diploma\\main_windows\\admin\\admin_sales\\saleswindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|solutionrelative:diploma\\main_windows\\admin\\admin_sales\\saleswindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|d:\\werehouse\\werehouse\\kursach\\diploma\\main_windows\\admin\\admin_sales\\paymentconfirmationwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|solutionrelative:diploma\\main_windows\\admin\\admin_sales\\paymentconfirmationwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|d:\\werehouse\\werehouse\\kursach\\diploma\\main_windows\\admin\\admin_sales\\paymentconfirmationwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|solutionrelative:diploma\\main_windows\\admin\\admin_sales\\paymentconfirmationwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|d:\\werehouse\\werehouse\\kursach\\diploma\\main_windows\\admin\\admin_product\\productmanagementwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|solutionrelative:diploma\\main_windows\\admin\\admin_product\\productmanagementwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|d:\\werehouse\\werehouse\\kursach\\diploma\\database\\queries.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{338D3C35-75AC-82EB-A174-DA4F11F2E06A}|Diploma\\Diploma.csproj|solutionrelative:diploma\\database\\queries.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
@@ -13,20 +33,82 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 233,
-          "SelectedChildIndex": 0,
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "ProductManagementWindow.xaml",
+              "DocumentMoniker": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\admin\\admin_product\\ProductManagementWindow.xaml",
+              "RelativeDocumentMoniker": "Diploma\\main_windows\\admin\\admin_product\\ProductManagementWindow.xaml",
+              "ToolTip": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\admin\\admin_product\\ProductManagementWindow.xaml",
+              "RelativeToolTip": "Diploma\\main_windows\\admin\\admin_product\\ProductManagementWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-05-25T15:08:30.855Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "PaymentConfirmationWindow.xaml",
+              "DocumentMoniker": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\admin\\admin_sales\\PaymentConfirmationWindow.xaml",
+              "RelativeDocumentMoniker": "Diploma\\main_windows\\admin\\admin_sales\\PaymentConfirmationWindow.xaml",
+              "ToolTip": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\admin\\admin_sales\\PaymentConfirmationWindow.xaml",
+              "RelativeToolTip": "Diploma\\main_windows\\admin\\admin_sales\\PaymentConfirmationWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-05-25T15:05:24.805Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "PaymentConfirmationWindow.xaml.cs",
+              "DocumentMoniker": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\admin\\admin_sales\\PaymentConfirmationWindow.xaml.cs",
+              "RelativeDocumentMoniker": "Diploma\\main_windows\\admin\\admin_sales\\PaymentConfirmationWindow.xaml.cs",
+              "ToolTip": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\admin\\admin_sales\\PaymentConfirmationWindow.xaml.cs*",
+              "RelativeToolTip": "Diploma\\main_windows\\admin\\admin_sales\\PaymentConfirmationWindow.xaml.cs*",
+              "ViewState": "AgIAABsAAAAAAAAAAAAwwBwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-25T14:53:25.657Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "SalesWindow.xaml.cs",
+              "DocumentMoniker": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\admin\\admin_sales\\SalesWindow.xaml.cs",
+              "RelativeDocumentMoniker": "Diploma\\main_windows\\admin\\admin_sales\\SalesWindow.xaml.cs",
+              "ToolTip": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\admin\\admin_sales\\SalesWindow.xaml.cs",
+              "RelativeToolTip": "Diploma\\main_windows\\admin\\admin_sales\\SalesWindow.xaml.cs",
+              "ViewState": "AgIAADgBAAAAAAAAAAAwwFwBAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-25T14:47:23.666Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "SalesWindow.xaml",
+              "DocumentMoniker": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\admin\\admin_sales\\SalesWindow.xaml",
+              "RelativeDocumentMoniker": "Diploma\\main_windows\\admin\\admin_sales\\SalesWindow.xaml",
+              "ToolTip": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\main_windows\\admin\\admin_sales\\SalesWindow.xaml*",
+              "RelativeToolTip": "Diploma\\main_windows\\admin\\admin_sales\\SalesWindow.xaml*",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-05-25T14:46:21.07Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
               "Title": "Queries.cs",
               "DocumentMoniker": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\Database\\Queries.cs",
               "RelativeDocumentMoniker": "Diploma\\Database\\Queries.cs",
               "ToolTip": "D:\\Werehouse\\Werehouse\\Kursach\\Diploma\\Database\\Queries.cs",
               "RelativeToolTip": "Diploma\\Database\\Queries.cs",
-              "ViewState": "AgIAAHQDAAAAAAAAAAAgwJADAAAdAAAAAAAAAA==",
+              "ViewState": "AgIAABkAAAAAAAAAAAASwCkAAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-20T20:02:18.282Z",
+              "WhenOpened": "2025-05-25T13:59:51.925Z",
               "EditorCaption": ""
             }
           ]

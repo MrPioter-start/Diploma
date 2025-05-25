@@ -264,6 +264,8 @@ CREATE TABLE Reports (
     FOREIGN KEY (GeneratedBy) REFERENCES Users(Username),
     FOREIGN KEY (TransactionID) REFERENCES Transactions(TransactionID)
 );
+select * from Customers
+
 ALTER TABLE Products
 ADD Brand NVARCHAR(100) NULL;
 
