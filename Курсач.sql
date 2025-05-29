@@ -38,6 +38,8 @@ CREATE TABLE Orders (
     AdminUsername NVARCHAR(50)
 );
 
+select * from PromotionRules
+
 ALTER TABLE Orders
 ADD CustomerID INT NULL;
 
@@ -420,6 +422,11 @@ CREATE TABLE Transactions (
     FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID),
     FOREIGN KEY (CreatedBy) REFERENCES Users(Username)
 );
+
+
+delete from TransactionDetails
+delete from Transactions
+delete from Returns
 
 select * from TransactionDetails
 select * from Customers

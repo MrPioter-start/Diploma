@@ -16,6 +16,7 @@ namespace Kursach
     public partial class AdminWindow : Window
     {
         private string adminUsername;
+        private DataTable allTransactionsTable;
 
         public AdminWindow(string username)
         {
@@ -61,26 +62,47 @@ namespace Kursach
         {
             try
             {
-                var transactionsTable = Queries.GetTransactionsHistory(adminUsername);
+                allTransactionsTable = Queries.GetTransactionsHistory(adminUsername);
 
-                if (transactionsTable == null || transactionsTable.Rows.Count == 0)
+                if (allTransactionsTable == null || allTransactionsTable.Rows.Count == 0)
                 {
                     SalesHistoryDataGrid.ItemsSource = null;
                     return;
                 }
 
-                SalesHistoryDataGrid.ItemsSource = transactionsTable.DefaultView;
+                ApplyTransactionTypeFilter(); 
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка загрузки данных о транзакциях: {ex.Message}", "Ошибка");
             }
         }
-        private void UserManagement(object sender, RoutedEventArgs e)
+
+        private void ApplyTransactionTypeFilter()
         {
-            var userManagement = new UserManagementWindow(adminUsername);
-            userManagement.ShowDialog();
+            if (allTransactionsTable == null) return;
+
+            string selectedType = (TransactionTypeFilterComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString();
+
+            if (selectedType == "Все" || string.IsNullOrEmpty(selectedType))
+            {
+                SalesHistoryDataGrid.ItemsSource = allTransactionsTable.DefaultView;
+            }
+            else
+            {
+                DataView filteredView = new DataView(allTransactionsTable)
+                {
+                    RowFilter = $"Type = '{selectedType}'"
+                };
+                SalesHistoryDataGrid.ItemsSource = filteredView;
+            }
         }
+
+        private void TransactionTypeFilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ApplyTransactionTypeFilter();
+        }
+
 
         private void AdminCode(object sender, RoutedEventArgs e)
         {

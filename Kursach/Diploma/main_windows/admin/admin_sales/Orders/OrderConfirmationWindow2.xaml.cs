@@ -85,9 +85,8 @@ namespace Diploma.main_windows
             }
 
             Console.WriteLine("[LOG] Сохраняем заказ в AddSaleOrder. Проверка на дублирование списания");
-            Queries.AddSaleOrder(selectedProductsForSaving, totalAmount, adminUsername);
 
-            Queries.UpdateCashAmount(totalAmount, "Продажа", adminUsername);
+            Queries.UpdateCashAmount(totalAmount, "Заказ", adminUsername);
             decimal currentTotalOrders = Queries.GetCustomerTotalOrders(customerEmail);
             Queries.UpdateCustomerTotalOrders(customerEmail, currentTotalOrders + totalAmount);
         }

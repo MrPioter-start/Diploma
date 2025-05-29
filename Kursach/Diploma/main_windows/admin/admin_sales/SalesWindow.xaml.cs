@@ -2,13 +2,12 @@
 using Kursach.Database;
 using Microsoft.Win32;
 using OfficeOpenXml;
-using System;
 using System.Data;
 using System.IO;
-using System.Linq;
 using System.Windows;
-using ExcelDataReader;
 using System.Windows.Controls;
+using Kursach.Database.WarehouseApp.Database;
+
 
 namespace Kursach.main_windows.admin
 {
@@ -25,7 +24,7 @@ namespace Kursach.main_windows.admin
             InitializeComponent();
             isDiscountInPercent = false;
 
-            this.Loaded += SalesWindow_Loaded;  // вызов LoadProducts после загрузки окна
+            this.Loaded += SalesWindow_Loaded;  
         }
 
         private void SalesWindow_Loaded(object sender, RoutedEventArgs e)
@@ -55,7 +54,7 @@ namespace Kursach.main_windows.admin
                 }
             }
 
-            Queries.ApplyPromotions(productsTable);
+            ApplyPromotionsToProducts(productsTable);
 
             ProductsDataGrid.ItemsSource = productsTable.DefaultView;
 
@@ -125,13 +124,25 @@ namespace Kursach.main_windows.admin
             foreach (var row in selectedProducts)
             {
                 string productName = row.Field<string>("Name");
-                int currentQuantity = row.Field<int>("Quantity");
                 int orderQuantity = row.Field<int>("OrderQuantity");
 
-                int newQuantity = currentQuantity - orderQuantity;
-                Queries.UpdateProductQuantity(productName, newQuantity);
+                var originalRow = productsTable.AsEnumerable()
+                    .FirstOrDefault(r => r.Field<string>("Name") == productName);
+
+                if (originalRow != null)
+                {
+                    int currentQuantity = originalRow.Field<int>("Quantity");
+                    int newQuantity = currentQuantity - orderQuantity;
+
+                    Queries.UpdateProductQuantity(productName, newQuantity);
+                }
+                else
+                {
+                    MessageBox.Show($"Не удалось обновить количество для товара {productName}", "Ошибка");
+                }
             }
         }
+
 
         private void ResetForm()
         {
@@ -272,10 +283,10 @@ namespace Kursach.main_windows.admin
                 if (productsTable == null)
                     return;
 
-                // Фильтруем товары с OrderQuantity > 0
                 var selectedProducts = productsTable.AsEnumerable()
-                    .Where(row => row.Field<int>("OrderQuantity") > 0)
-                    .ToList();
+    .Where(row => Convert.ToInt32(row["OrderQuantity"]) > 0)
+    .ToList();
+
 
                 if (selectedProducts.Count == 0)
                 {
@@ -283,32 +294,32 @@ namespace Kursach.main_windows.admin
                     return;
                 }
 
-                // Создаем новую таблицу с необходимыми колонками
                 var formattedProducts = new DataTable();
                 formattedProducts.Columns.Add("ProductID", typeof(int));
                 formattedProducts.Columns.Add("Name", typeof(string));
+                formattedProducts.Columns.Add("Brand", typeof(string));
+                formattedProducts.Columns.Add("CategoryName", typeof(string));
                 formattedProducts.Columns.Add("OrderQuantity", typeof(int));
                 formattedProducts.Columns.Add("Price", typeof(decimal));
 
                 foreach (var row in selectedProducts)
                 {
                     var newRow = formattedProducts.NewRow();
-                    newRow["ProductID"] = row.Field<int>("ProductID"); // Убедитесь, что колонка ProductID существует
+                    newRow["ProductID"] = row.Field<int>("ProductID"); 
                     newRow["Name"] = row.Field<string>("Name");
+                    newRow["Brand"] = row.Field<string>("Brand") ?? "Неизвестно";
+                    newRow["CategoryName"] = row.Field<string>("CategoryName") ?? "Неизвестно";
                     newRow["OrderQuantity"] = row.Field<int>("OrderQuantity");
                     newRow["Price"] = row.Field<decimal>("Price");
                     formattedProducts.Rows.Add(newRow);
                 }
 
-                // Преобразуем данные в List<DataRow>
                 var formattedProductsList = formattedProducts.AsEnumerable().ToList();
 
-                // Подсчитываем общую сумму
                 decimal originalTotal = CalculateTotalPrice(formattedProductsList);
                 decimal discountedTotal = ApplyDiscount(originalTotal);
                 decimal paymentAmount = discountedTotal;
 
-                // Проверяем введенную сумму оплаты
                 if (!string.IsNullOrEmpty(PaymentAmountTextBox.Text))
                 {
                     if (!decimal.TryParse(PaymentAmountTextBox.Text, out paymentAmount) || paymentAmount < discountedTotal)
@@ -318,19 +329,15 @@ namespace Kursach.main_windows.admin
                     }
                 }
 
-                // Открываем окно подтверждения
                 var paymentWindow = new PaymentConfirmationWindow(formattedProductsList, originalTotal, discountedTotal, paymentAmount);
                 bool? result = paymentWindow.ShowDialog();
 
                 if (result == true && paymentWindow.IsConfirmed)
                 {
-                    // Обновляем количество товаров
                     UpdateQuantities(formattedProductsList);
 
-                    // Добавляем транзакцию
                     Queries.AddTransaction(formattedProductsList, discountedTotal, adminUsername);
 
-                    // Обновляем баланс кассы
                     Queries.UpdateCashAmount(discountedTotal, "Продажа", adminUsername);
 
                     MessageBox.Show("Заказ успешно оплачен!", "Успех");
@@ -390,7 +397,7 @@ namespace Kursach.main_windows.admin
 
                             if (!int.TryParse(quantityStr, out int quantity) || quantity <= 0)
                             {
-                                continue; 
+                                continue;
                             }
 
                             var productRow = productsTable.AsEnumerable()
@@ -413,9 +420,12 @@ namespace Kursach.main_windows.admin
 
                         if (selectedProducts.Rows.Count > 0)
                         {
+                            ApplyPromotionsToProductsFromExcel(selectedProducts, productsTable);
+
                             var orderConfirmationWindow = new OrderConfirmationWindow(clientInfo, selectedProducts, adminUsername);
                             orderConfirmationWindow.ShowDialog();
                         }
+
                         else
                         {
                             MessageBox.Show("Нет доступных продуктов для создания заказа.", "Предупреждение");
@@ -428,6 +438,89 @@ namespace Kursach.main_windows.admin
                 }
             }
         }
+
+        private void ApplyPromotionsToProductsFromExcel(DataTable selectedProducts, DataTable productsTable)
+        {
+            // Получаем активные акции
+            var activePromotions = GetActivePromotions();
+
+            // Создаем словарь ProductID -> CategoryName из productsTable
+            var productCategories = productsTable.AsEnumerable()
+                .ToDictionary(row => row.Field<int>("ProductID"),
+                              row => row.Field<string>("CategoryName") ?? string.Empty);
+
+            // Добавляем колонку CategoryName в selectedProducts, если её нет
+            if (!selectedProducts.Columns.Contains("CategoryName"))
+                selectedProducts.Columns.Add("CategoryName", typeof(string));
+
+            // Заполняем CategoryName по ProductID
+            foreach (DataRow row in selectedProducts.Rows)
+            {
+                int productId = (int)row["ProductID"];
+                if (productCategories.TryGetValue(productId, out var categoryName))
+                {
+                    row["CategoryName"] = categoryName;
+                }
+                else
+                {
+                    row["CategoryName"] = string.Empty; // или "Неизвестно"
+                }
+            }
+
+            // Теперь применяем скидки по тем же правилам, что и в оригинальном методе
+            foreach (DataRow productRow in selectedProducts.Rows)
+            {
+                decimal originalPrice = Convert.ToDecimal(productRow["Price"]);
+                string productName = productRow["Name"].ToString();
+                string brand = productRow["Brand"].ToString();
+                string category = productRow["CategoryName"].ToString();
+
+                decimal totalDiscount = 0;
+
+                foreach (var promotion in activePromotions)
+                {
+                    bool isApplicable = false;
+
+                    switch (promotion.TargetType)
+                    {
+                        case "Товар":
+                            isApplicable = productName == promotion.TargetValue;
+                            break;
+
+                        case "Бренд":
+                            isApplicable = brand == promotion.TargetValue;
+                            break;
+
+                        case "Категория":
+                            isApplicable = category == promotion.TargetValue;
+                            break;
+                    }
+
+                    if (isApplicable)
+                    {
+                        totalDiscount += promotion.DiscountPercentage;
+                    }
+                }
+
+                if (totalDiscount > 0)
+                {
+                    decimal maxDiscount = 80m;
+                    decimal minPrice = 10m;
+
+                    if (totalDiscount > maxDiscount)
+                        totalDiscount = maxDiscount;
+
+                    decimal discountedPrice = originalPrice * (1 - totalDiscount / 100);
+
+                    if (discountedPrice < minPrice)
+                        discountedPrice = minPrice;
+
+                    productRow["Price"] = Math.Round(discountedPrice, 2);
+                }
+            }
+        }
+
+
 
         private void DownloadExcelTemplate_Click(object sender, RoutedEventArgs e)
         {
@@ -502,21 +595,28 @@ namespace Kursach.main_windows.admin
             }
         }
 
-        // Здесь добавь методы LoadFrequentProducts и LoadInfrequentProducts, если они есть, или заглушки:
         private void LoadFrequentProducts()
         {
             var allProducts = Queries.GetProductsForSale(adminUsername);
 
             if (allProducts == null || !allProducts.Columns.Contains("TotalSoldQuantity"))
             {
+                MessageBox.Show("Нет данных о количестве продаж.", "Информация");
+                ProductsDataGrid.ItemsSource = null;
+                return;
+            }
+
+            var filteredRows = allProducts.AsEnumerable()
+                .Where(row => row.Field<int>("TotalSoldQuantity") >= 5);
+
+            if (!filteredRows.Any())
+            {
                 MessageBox.Show("Нет часто продаваемых товаров.", "Информация");
                 ProductsDataGrid.ItemsSource = null;
                 return;
             }
 
-            var frequentProducts = allProducts.AsEnumerable()
-                .Where(row => row.Field<int>("TotalSoldQuantity") >= 10) // например, больше или равно 10
-                .CopyToDataTable();
+            var frequentProducts = filteredRows.CopyToDataTable();
 
             if (!frequentProducts.Columns.Contains("OrderQuantity"))
             {
@@ -527,11 +627,8 @@ namespace Kursach.main_windows.admin
                 }
             }
 
-            productsTable = frequentProducts;
-            ProductsDataGrid.ItemsSource = productsTable.DefaultView;
-            UpdateTotalPrice();
+            ProductsDataGrid.ItemsSource = frequentProducts.DefaultView;
         }
-
 
         private void LoadInfrequentProducts()
         {
@@ -545,7 +642,7 @@ namespace Kursach.main_windows.admin
             }
 
             var infrequentProducts = allProducts.AsEnumerable()
-                .Where(row => row.Field<int>("TotalSoldQuantity") < 10) 
+                .Where(row => row.Field<int>("TotalSoldQuantity") < 5) 
                 .CopyToDataTable();
 
             if (!infrequentProducts.Columns.Contains("OrderQuantity"))
@@ -561,5 +658,91 @@ namespace Kursach.main_windows.admin
             ProductsDataGrid.ItemsSource = productsTable.DefaultView;
             UpdateTotalPrice();
         }
+
+        private List<Promotion> GetActivePromotions()
+        {
+            string query = @"
+SELECT 
+    p.PromotionID,
+    pr.TargetType,
+    pr.TargetValue,
+    p.DiscountPercentage
+FROM 
+    Promotions p
+INNER JOIN 
+    PromotionRules pr ON p.PromotionID = pr.PromotionID
+WHERE 
+    @Today BETWEEN p.StartDate AND p.EndDate";
+
+            return DatabaseHelper.ExecuteQuery(query, command =>
+            {
+                command.Parameters.AddWithValue("@Today", DateTime.Today);
+            }).AsEnumerable().Select(row => new Promotion
+            {
+                PromotionID = row.Field<int>("PromotionID"),
+                TargetType = row.Field<string>("TargetType"),
+                TargetValue = row.Field<string>("TargetValue"),
+                DiscountPercentage = row.Field<decimal>("DiscountPercentage")
+            }).ToList();
+        }
+
+        private void ApplyPromotionsToProducts(DataTable products)
+        {
+            var activePromotions = GetActivePromotions();
+
+            foreach (DataRow productRow in products.Rows)
+            {
+                decimal originalPrice = Convert.ToDecimal(productRow["Price"]);
+                string productName = productRow["Name"].ToString();
+                string brand = productRow["Brand"].ToString();
+                string category = productRow["CategoryName"].ToString();
+
+                // Вычисляем общую скидку для товара
+                decimal totalDiscount = 0;
+
+                foreach (var promotion in activePromotions)
+                {
+                    bool isApplicable = false;
+
+                    switch (promotion.TargetType)
+                    {
+                        case "Товар":
+                            isApplicable = productName == promotion.TargetValue;
+                            break;
+
+                        case "Бренд":
+                            isApplicable = brand == promotion.TargetValue;
+                            break;
+
+                        case "Категория":
+                            isApplicable = category == promotion.TargetValue;
+                            break;
+                    }
+
+                    if (isApplicable)
+                    {
+                        totalDiscount += promotion.DiscountPercentage;
+                    }
+                }
+
+                if (totalDiscount > 0)
+                {
+                    decimal maxDiscount = 80m;
+                    decimal minPrice = 10m;
+
+                    if (totalDiscount > maxDiscount)
+                        totalDiscount = maxDiscount;
+
+                    decimal discountedPrice = originalPrice * (1 - totalDiscount / 100);
+
+                    if (discountedPrice < minPrice)
+                        discountedPrice = minPrice;
+
+                    productRow["Price"] = Math.Round(discountedPrice, 2);
+                }
+            }
+        }
+
+
     }
 }

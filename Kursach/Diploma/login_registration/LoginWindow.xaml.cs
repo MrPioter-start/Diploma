@@ -48,11 +48,6 @@ namespace Kursach.login_registration
                         managerDashboard.Show();
                         this.Close();
                         break;
-                    case "Пользователь":
-                        var userDashboard = new UserWindow(username); 
-                        userDashboard.Show();
-                        this.Close();
-                        break;
                     default:
                         MessageBox.Show("Роль пользователя не определена.", "Ошибка");
                         break;

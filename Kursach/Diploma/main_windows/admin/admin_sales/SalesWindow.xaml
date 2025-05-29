@@ -72,7 +72,7 @@
                 <DataGridTextColumn Header="Категория" Binding="{Binding CategoryName}" Width="*" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Бренд" Binding="{Binding Brand}" Width="*" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Цена" Binding="{Binding Price}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Наличие" Binding="{Binding Quantity}" Width="*" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Количество" Binding="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*" IsReadOnly="True"/>
                 <DataGridTemplateColumn Header="Количество" Width="150">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

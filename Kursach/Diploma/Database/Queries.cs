@@ -47,6 +47,32 @@ namespace Kursach.Database
             }
         }
 
+        public static string GetTransactionStatus(int transactionId)
+        {
+            string query = "SELECT Status FROM Transactions WHERE TransactionID = @TransactionID";
+
+            object result = DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
+            });
+
+            return result?.ToString() ?? string.Empty;
+        }
+
+        public static string GetTransactionType(int transactionId)
+        {
+            string query = "SELECT Type FROM Transactions WHERE TransactionID = @TransactionID";
+
+            object result = DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
+            });
+
+            return result?.ToString() ?? string.Empty;
+        }
+
+
+
         public static DataTable GetOrders(string adminUsername)
         {
             string query = @"
@@ -718,26 +744,22 @@ WHERE
         public static DataTable GetSalesReport(DateTime startDate, DateTime endDate, string adminUsername)
         {
             string query = @"
-        SELECT 
-            t.Total AS 'Сумма продажи',
-            t.TransactionTime AS 'Время продажи',
-            c.Name AS 'Имя клиента',
-            td.ProductID,
-            p.Name AS 'Наименование товара',
-            td.Quantity AS 'Количество',
-            td.Price AS 'Цена за единицу'
-        FROM 
-            Transactions t
-        LEFT JOIN 
-            Customers c ON t.CustomerID = c.CustomerID
-        LEFT JOIN 
-            TransactionDetails td ON t.TransactionID = td.TransactionID
-        LEFT JOIN 
-            Products p ON td.ProductID = p.ProductID
-        WHERE 
-            t.Type = 'Продажа' AND 
-            t.CreatedBy = @AdminUsername AND 
-            t.TransactionTime BETWEEN @StartDate AND @EndDate";
+    SELECT 
+        t.Total AS 'Сумма продажи',
+        t.TransactionTime AS 'Время продажи',
+        CONCAT(p.Name, ' ', p.Brand) AS 'Наименование товара',
+        td.Quantity AS 'Количество',
+        td.Price AS 'Цена за единицу'
+    FROM 
+        Transactions t
+    LEFT JOIN 
+        TransactionDetails td ON t.TransactionID = td.TransactionID
+    LEFT JOIN 
+        Products p ON td.ProductID = p.ProductID
+    WHERE 
+        t.Type = 'Продажа' AND 
+        t.CreatedBy = @AdminUsername AND 
+        t.TransactionTime BETWEEN @StartDate AND @EndDate";
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
@@ -798,24 +820,24 @@ WHERE
         public static DataTable GetPopularProductsReport(DateTime startDate, DateTime endDate, string adminUsername)
         {
             string query = @"
-        SELECT 
-            p.Name AS 'Название',
-            SUM(td.Quantity) AS 'Всего продано',
-            AVG(td.Price) AS 'Стоимость'
-        FROM 
-            TransactionDetails td
-        INNER JOIN 
-            Transactions t ON td.TransactionID = t.TransactionID
-        INNER JOIN 
-            Products p ON td.ProductID = p.ProductID
-        WHERE 
-            t.Type = 'Продажа' AND 
-            t.CreatedBy = @AdminUsername AND 
-            t.TransactionTime BETWEEN @StartDate AND @EndDate
-        GROUP BY 
-            p.Name
-        ORDER BY 
-            SUM(td.Quantity) DESC"; 
+    SELECT 
+        p.Name AS 'Название',
+        SUM(td.Quantity) AS 'Всего продано',
+        ROUND(AVG(td.Price), 2) AS 'Стоимость'
+    FROM 
+        TransactionDetails td
+    INNER JOIN 
+        Transactions t ON td.TransactionID = t.TransactionID
+    INNER JOIN 
+        Products p ON td.ProductID = p.ProductID
+    WHERE 
+        t.Type = 'Продажа' AND 
+        t.CreatedBy = @AdminUsername AND 
+        t.TransactionTime BETWEEN @StartDate AND @EndDate
+    GROUP BY 
+        p.Name
+    ORDER BY 
+        SUM(td.Quantity) DESC";
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
@@ -883,6 +905,7 @@ WHERE
 
             string query = @"
 SELECT 
+    Products.ProductID,
     Products.Name, 
     Categories.CategoryName, 
     Products.Brand, 
@@ -898,6 +921,7 @@ LEFT JOIN
 WHERE 
     Products.CreatedBy = @CreatedBy
 GROUP BY 
+    Products.ProductID,
     Products.Name, 
     Categories.CategoryName, 
     Products.Brand, 
@@ -905,6 +929,7 @@ GROUP BY
     Products.Quantity
 ORDER BY 
     TotalSoldQuantity DESC";
+
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
@@ -946,69 +971,6 @@ ORDER BY
                 command.Parameters.AddWithValue("@CreatedBy", adminUsername);
             });
         }
-
-
-        public static void ApplyPromotions(DataTable productsTable)
-        {
-            try
-            {
-                string promotionsQuery = @"
-            SELECT 
-                p.PromotionID,
-                p.DiscountPercentage,
-                pr.TargetType,
-                pr.TargetValue
-            FROM 
-                Promotions p
-            JOIN 
-                PromotionRules pr ON p.PromotionID = pr.PromotionID
-            WHERE 
-                GETDATE() BETWEEN p.StartDate AND p.EndDate";
-
-                var promotions = DatabaseHelper.ExecuteQuery(promotionsQuery, command => { });
-
-                foreach (DataRow promotionRow in promotions.Rows)
-                {
-                    decimal discountPercentage = Convert.ToDecimal(promotionRow["DiscountPercentage"]);
-                    string targetType = promotionRow["TargetType"].ToString();
-                    string targetValue = promotionRow["TargetValue"].ToString();
-
-                    foreach (DataRow productRow in productsTable.Rows)
-                    {
-                        bool applyDiscount = false;
-
-                        switch (targetType)
-                        {
-                            case "Product":
-                                if (productRow["Name"].ToString() == targetValue)
-                                    applyDiscount = true;
-                                break;
-                            case "Brand":
-                                if (productRow["Brand"].ToString() == targetValue)
-                                    applyDiscount = true;
-                                break;
-                            case "Category":
-                                if (productRow["CategoryName"].ToString() == targetValue)
-                                    applyDiscount = true;
-                                break;
-                        }
-
-                        if (applyDiscount)
-                        {
-                            decimal originalPrice = Convert.ToDecimal(productRow["Price"]);
-                            decimal discountedPrice = originalPrice * (1 - discountPercentage / 100);
-                            productRow["Price"] = Math.Round(discountedPrice, 2);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Ошибка при применении акций: {ex.Message}");
-            }
-        }
-
-
 
         [Obsolete]
         public static void UpdateProduct(string originalName, string newName, int categoryID, decimal price, int quantity,
@@ -1638,19 +1600,19 @@ WHERE TransactionID = @TransactionID AND ProductID = @ProductID";
             });
         }
 
-        [Obsolete]
-        public static void DeleteProduct(string productName, string adminUsername)
-        { 
+        public static void DeleteProduct(int productId, string adminUsername)
+        {
             string deleteQuery = @"
-            DELETE FROM Products 
-            WHERE ProductID = @ProductID AND CreatedBy = @CreatedBy";
+    DELETE FROM Products 
+    WHERE ProductID = @ProductID AND CreatedBy = @CreatedBy";
 
             DatabaseHelper.ExecuteNonQuery(deleteQuery, command =>
             {
-                command.Parameters.AddWithValue("@Name", productName);
+                command.Parameters.AddWithValue("@ProductID", productId);
                 command.Parameters.AddWithValue("@CreatedBy", adminUsername);
             });
         }
+
 
         [Obsolete]
         public static void AddCategory(string categoryName, string createdBy)

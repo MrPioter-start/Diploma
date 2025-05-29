@@ -1,4 +1,5 @@
-﻿using Kursach.Database;
+﻿
+using Kursach.Database;
 using Kursach.Database.WarehouseApp.Database;
 using Kursach.main_windows.admin.admin_product;
 using System;
@@ -14,6 +15,7 @@ namespace Kursach.main_windows.admin
     /// </summary>
     public partial class ProductManagementWindow : Window
     {
+        private bool isInitialized = false;
         private DataTable originalTable;
         private readonly string adminUsername; // сделаем readonly, чтобы случайно не переписать
 
@@ -33,21 +35,108 @@ namespace Kursach.main_windows.admin
             SearchTextBox.TextChanged += SearchTextBox_TextChanged;
 
             LoadProducts(); // Теперь поле заполнено, можно загружать
+            isInitialized = true;
         }
+
 
         private void LoadProducts()
         {
             try
             {
                 var products = Queries.GetProducts(adminUsername);
+                ApplyPromotionsToProducts(products);
                 ProductsDataGrid.ItemsSource = products.DefaultView;
             }
             catch (Exception ex)
             {
-                return;
+                MessageBox.Show($"Ошибка при загрузке данных: {ex.Message}", "Ошибка");
             }
         }
 
+        private void ApplyPromotionsToProducts(DataTable products)
+        {
+            var activePromotions = GetActivePromotions();
+
+            foreach (DataRow productRow in products.Rows)
+            {
+                decimal originalPrice = Convert.ToDecimal(productRow["Price"]);
+                string productName = productRow["Name"].ToString();
+                string brand = productRow["Brand"].ToString();
+                string category = productRow["CategoryName"].ToString();
+
+                // Вычисляем общую скидку для товара
+                decimal totalDiscount = 0;
+
+                foreach (var promotion in activePromotions)
+                {
+                    bool isApplicable = false;
+
+                    switch (promotion.TargetType)
+                    {
+                        case "Товар":
+                            isApplicable = productName == promotion.TargetValue;
+                            break;
+
+                        case "Бренд":
+                            isApplicable = brand == promotion.TargetValue;
+                            break;
+
+                        case "Категория":
+                            isApplicable = category == promotion.TargetValue;
+                            break;
+                    }
+
+                    if (isApplicable)
+                    {
+                        totalDiscount += promotion.DiscountPercentage;
+                    }
+                }
+
+                if (totalDiscount > 0)
+                {
+                    decimal maxDiscount = 80m;
+                    decimal minPrice = 10m;
+
+                    if (totalDiscount > maxDiscount)
+                        totalDiscount = maxDiscount;
+
+                    decimal discountedPrice = originalPrice * (1 - totalDiscount / 100);
+
+                    if (discountedPrice < minPrice)
+                        discountedPrice = minPrice;
+
+                    productRow["Price"] = Math.Round(discountedPrice, 2);
+                }
+            }
+        }
+
+
+        private List<Promotion> GetActivePromotions()
+        {
+            string query = @"
+SELECT 
+    p.PromotionID,
+    pr.TargetType,
+    pr.TargetValue,
+    p.DiscountPercentage
+FROM 
+    Promotions p
+INNER JOIN 
+    PromotionRules pr ON p.PromotionID = pr.PromotionID
+WHERE 
+    @Today BETWEEN p.StartDate AND p.EndDate";
+
+            return DatabaseHelper.ExecuteQuery(query, command =>
+            {
+                command.Parameters.AddWithValue("@Today", DateTime.Today);
+            }).AsEnumerable().Select(row => new Promotion
+            {
+                PromotionID = row.Field<int>("PromotionID"),
+                TargetType = row.Field<string>("TargetType"),
+                TargetValue = row.Field<string>("TargetValue"),
+                DiscountPercentage = row.Field<decimal>("DiscountPercentage")
+            }).ToList();
+        }
 
         private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -146,19 +235,22 @@ namespace Kursach.main_windows.admin
 
                 try
                 {
-                    Queries.DeleteProduct(productName, adminUsername);
-                    MessageBox.Show($"Товар {productName} успешно удален.", "Успех");
+                    Queries.DeleteProduct(productId, adminUsername);
+                    MessageBox.Show($"Товар успешно удален.", "Успех");
                     LoadProducts();
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Ошибка при удалении товара: {ex.Message}", "Ошибка");
                 }
+
             }
         }
 
         private void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (!isInitialized) return;
+
             if (FilterComboBox.SelectedItem is ComboBoxItem selectedItem)
             {
                 string filterType = selectedItem.Content.ToString();
@@ -168,17 +260,16 @@ namespace Kursach.main_windows.admin
                     case "Все товары":
                         LoadProducts();
                         break;
-
                     case "Часто продаваемые":
                         LoadFrequentProducts();
                         break;
-
                     case "Нечасто продаваемые":
                         LoadInfrequentProducts();
                         break;
                 }
             }
         }
+
 
         private void LoadFrequentProducts()
         {

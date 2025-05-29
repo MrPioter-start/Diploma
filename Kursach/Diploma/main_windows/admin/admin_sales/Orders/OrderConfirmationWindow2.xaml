@@ -4,7 +4,7 @@
         Title="Подтверждение заказа" Height="600" Width="800"
         Background="#FF2D2D30" Foreground="White"
         WindowStartupLocation="CenterScreen">
-    <Grid Margin="0,0,0,29">
+    <Grid Margin="0,0,0,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -13,54 +13,100 @@
 
         <!-- Заголовок -->
         <TextBlock Text="Детали заказа" 
-                   FontSize="24" FontWeight="Bold" 
-                   HorizontalAlignment="Center" Margin="0,20,0,10"/>
+                   FontSize="26" FontWeight="Bold" 
+                   HorizontalAlignment="Center" Margin="0,20,0,16"
+                   Foreground="#FF00A651"/>
 
         <!-- Список товаров -->
         <DataGrid x:Name="OrderDetailsDataGrid" AutoGenerateColumns="False" 
                   Background="#FF3C3C3C" Foreground="White" BorderThickness="0" 
-                  Margin="20,0,20,10" CanUserAddRows="False" Grid.Row="1">
+                  Margin="20,0,20,0" CanUserAddRows="False" Grid.Row="1"
+                  HeadersVisibility="Column"
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow"
+                  AlternatingRowBackground="#FF4D4D4D"
+                  RowBackground="#FF3C3C3C"
+                  GridLinesVisibility="None">
+
             <DataGrid.Columns>
                 <DataGridTextColumn Header="ID" Binding="{Binding ProductID}" Width="50" Visibility="Hidden"/>
-                <DataGridTextColumn Header="Товар" Binding="{Binding ProductName}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Количество" Binding="{Binding OrderQuantity}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Цена за единицу" Binding="{Binding Price}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Сумма" Binding="{Binding Total}" Width="*" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Товар" Binding="{Binding ProductName}" Width="*" />
+                <DataGridTextColumn Header="Количество" Binding="{Binding OrderQuantity}" Width="*" />
+                <DataGridTextColumn Header="Цена за единицу" Binding="{Binding Price}" Width="*" />
+                <DataGridTextColumn Header="Сумма" Binding="{Binding Total}" Width="*" />
             </DataGrid.Columns>
 
-            <!-- Стиль строк DataGrid -->
+            <!-- Стиль строк -->
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
-                    <Setter Property="Background" Value="#FF3C3C3C"/>
-                    <Setter Property="Foreground" Value="White"/>
                     <Setter Property="FontSize" Value="14"/>
-                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="MinHeight" Value="32"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="#FF2A2A2A"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                            <Setter Property="Background" Value="#FF4D4D4D"/>
+                        </Trigger>
+                    </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
 
-            <!-- Стиль заголовков столбцов -->
+            <!-- Стиль ячеек -->
+            <DataGrid.CellStyle>
+                <Style TargetType="DataGridCell">
+                    <Setter Property="Padding" Value="8,4"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="BorderBrush" Value="Transparent"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="FontSize" Value="14"/>
+                </Style>
+            </DataGrid.CellStyle>
+
+            <!-- Стиль заголовков -->
             <DataGrid.ColumnHeaderStyle>
                 <Style TargetType="DataGridColumnHeader">
                     <Setter Property="Background" Value="#FF4D4D4D"/>
                     <Setter Property="Foreground" Value="White"/>
                     <Setter Property="FontWeight" Value="Bold"/>
-                    <Setter Property="FontSize" Value="14"/>
-                    <Setter Property="Padding" Value="10"/>
+                    <Setter Property="FontSize" Value="15"/>
+                    <Setter Property="Padding" Value="4,10"/>
                     <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
                 </Style>
             </DataGrid.ColumnHeaderStyle>
         </DataGrid>
 
-        <!-- Итоговая информация -->
-        <StackPanel Orientation="Vertical" Grid.Row="2" Margin="20,0">
-            <TextBlock x:Name="TotalPriceTextBlock" Foreground="#FF00A651" FontSize="18" FontWeight="Bold" HorizontalAlignment="Right"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-                <Button Content="Отменить" Click="Cancel_Click" 
-                        Background="#FFD4AF37" Foreground="White" 
-                        BorderThickness="0" Padding="10,5" FontSize="14" Cursor="Hand" Margin="0,0,10,0"/>
-                <Button Content="Подтвердить" Click="Confirm_Click" 
-                        Background="#FF00A651" Foreground="White" 
-                        BorderThickness="0" Padding="10,5" FontSize="14" Cursor="Hand"/>
+        <!-- Итог и кнопки -->
+        <StackPanel Orientation="Vertical" Grid.Row="2" Margin="20,16,20,0">
+            <TextBlock x:Name="TotalPriceTextBlock" 
+                       Foreground="#FF00A651" 
+                       FontSize="18" FontWeight="Bold" 
+                       HorizontalAlignment="Right" Margin="0,0,0,10"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Отменить" Click="Cancel_Click"
+                        Background="#FFAF3D3D" Foreground="White"
+                        BorderThickness="0" Padding="12,6"
+                        FontSize="14" Cursor="Hand" Margin="0,0,10,0"
+                        BorderBrush="Transparent"
+                        Width="120" Height="36"
+                        HorizontalAlignment="Right"
+                        Style="{DynamicResource {x:Static ToolBar.ButtonStyleKey}}"/>
+
+                <Button Content="Подтвердить" Click="Confirm_Click"
+                        Background="#FF00A651" Foreground="White"
+                        BorderThickness="0" Padding="12,6"
+                        FontSize="14" Cursor="Hand"
+                        Width="120" Height="36"
+                        BorderBrush="Transparent"
+                        HorizontalAlignment="Right"
+                        Style="{DynamicResource {x:Static ToolBar.ButtonStyleKey}}"/>
             </StackPanel>
         </StackPanel>
     </Grid>
