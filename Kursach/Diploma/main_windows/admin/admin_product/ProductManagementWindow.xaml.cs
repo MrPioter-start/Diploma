@@ -45,13 +45,15 @@ namespace Kursach.main_windows.admin
             {
                 var products = Queries.GetProducts(adminUsername);
                 ApplyPromotionsToProducts(products);
-                ProductsDataGrid.ItemsSource = products.DefaultView;
+                originalTable = products.Copy(); 
+                ProductsDataGrid.ItemsSource = originalTable.DefaultView;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при загрузке данных: {ex.Message}", "Ошибка");
             }
         }
+
 
         private void ApplyPromotionsToProducts(DataTable products)
         {
@@ -290,11 +292,12 @@ WHERE
                 if (filteredRows.Count == 0)
                 {
                     ProductsDataGrid.ItemsSource = null;
+                    originalTable = null;
                     return;
                 }
 
-                DataTable filteredTable = filteredRows.CopyToDataTable();
-                ProductsDataGrid.ItemsSource = filteredTable.DefaultView;
+                originalTable = filteredRows.CopyToDataTable();  // Сохраняем для поиска
+                ProductsDataGrid.ItemsSource = originalTable.DefaultView;
             }
             catch (Exception ex)
             {
@@ -321,17 +324,19 @@ WHERE
                 if (filteredRows.Count == 0)
                 {
                     ProductsDataGrid.ItemsSource = null;
+                    originalTable = null;
                     return;
                 }
 
-                DataTable filteredTable = filteredRows.CopyToDataTable();
-                ProductsDataGrid.ItemsSource = filteredTable.DefaultView;
+                originalTable = filteredRows.CopyToDataTable(); 
+                ProductsDataGrid.ItemsSource = originalTable.DefaultView;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка загрузки данных: {ex.Message}", "Ошибка");
             }
         }
+
 
         private void OpenCategoryManagement(object sender, RoutedEventArgs e)
         {

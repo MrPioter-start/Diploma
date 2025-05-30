@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Справка для Менеджера</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1f1f1f;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+
+        a {
+            color: #4cd137;
+            text-decoration: none;
+        }
+
+            a:hover {
+                text-decoration: underline;
+            }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #4cd137;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            margin: 1.5rem 0 0.5rem;
+            border-bottom: 2px solid #333;
+            padding-bottom: 0.25rem;
+        }
+
+        .card {
+            background-color: #2b2b2b;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            transition: background 0.2s;
+        }
+
+            .card:hover {
+                background-color: #333;
+            }
+
+        ul, ol {
+            margin-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .to-top {
+            display: block;
+            margin: 2rem auto 0;
+            text-align: center;
+        }
+
+            .to-top a {
+                display: inline-block;
+                padding: 0.5rem 1rem;
+                background-color: #4cd137;
+                color: #1f1f1f;
+                border-radius: 4px;
+                font-weight: bold;
+                transition: background 0.2s;
+            }
+
+                .to-top a:hover {
+                    background-color: #3ebc2e;
+                }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="top">Справка для Менеджера</h1>
+
+        <div class="card">
+            <h2>1. Главное окно «Транзакции»</h2>
+            <ul>
+                <li>Отображаются все транзакции (Продажи и Заказы).</li>
+                <li>Фильтрация: «Все», «Продажи» или «Заказы».</li>
+                <li>Двойной клик по строке — открытие окна деталей транзакции.</li>
+            </ul>
+            <h3>В деталях транзакции</h3>
+            <ul>
+                <li>Можно выбрать товары для возврата (только если статус «Завершён»).</li>
+                <li>Возврат обновляет остатки и историю возвратов в кассе.</li>
+                <li>При смене статуса заказов (не «Завершён») возврат недоступен.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>2. Окно «Продажи»</h2>
+            <ul>
+                <li>Отображает товары с наличием и активными акциями.</li>
+                <li>Фильтры: «Все», «Часто продаваемые» и строка поиска.</li>
+                <li>В колонке «Количество» — кнопки «+»/«–» для формирования заказа.</li>
+                <li>Ввод скидки: в процентах (%) или фиксированная сумма (BYN).</li>
+                <li>Ввод «Сдача с» при необходимости.</li>
+                <li>Кнопки «Шаблон» (скачать Excel-шаблон) и «Excel-заказ» (загрузить заполненный файл).</li>
+                <li>При подтверждении заказа открывается окно с деталями, акциями, итогом, сдачей и выбором «Оплатить»/«Отменить».</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>3. Окно «Заказы»</h2>
+            <ul>
+                <li>Отображаются все текущие заказы с поиском и фильтрацией.</li>
+                <li>
+                    Статусы заказа:
+                    <ol>
+                        <li>Оформлен → Собран → В пути → Доставлен → Завершён → Отменён</li>
+                        <li>«Завершён» устанавливается автоматически после подтверждения доставки в деталях заказа.</li>
+                    </ol>
+                </li>
+                <li>Клиент получает уведомление по электронной почте при каждом изменении статуса.</li>
+                <li>Возврат в этом окне невозможен до статуса «Завершён».</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>4. Окно «Касса»</h2>
+            <ul>
+                <li>Ввод суммы и выбор операции: «Пополнение» или «Снятие».</li>
+                <li>Кнопка «Выполнить» — проведение операции.</li>
+                <li>Кнопка «История операций» — просмотр и экспорт в Excel/Word.</li>
+                <li>Кнопка «История возвратов» — список возвратов товаров.</li>
+            </ul>
+        </div>
+
+        <div class="to-top">
+            <a href="#top">Наверх ↑</a>
+        </div>
+    </div>
+</body>
+</html>

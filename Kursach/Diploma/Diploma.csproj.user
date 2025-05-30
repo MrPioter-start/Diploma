@@ -47,6 +47,9 @@
     <Compile Update="main_windows\admin\admin_cash\CashManagementWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="main_windows\admin\Promotions\LoyaltyLevelsWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="main_windows\admin\Promotions\PromotionsManagementWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -59,7 +62,7 @@
     <Compile Update="main_windows\admin\admin_returns\TransactionDetailsWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="main_windows\ManagerWindow.xaml.cs">
+    <Compile Update="main_windows\manager\ManagerWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="main_windows\admin\admin_codes\UserManagementWindow.xaml.cs">
@@ -72,9 +75,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="main_windows\admin\admin_sales\Orders\OrdersWindow.xaml.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Update="main_windows\SalesWindowManager.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="main_windows\admin\admin_codes\ViewCodesWindow.xaml.cs">

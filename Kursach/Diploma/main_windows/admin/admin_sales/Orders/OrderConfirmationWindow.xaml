@@ -9,6 +9,8 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <!-- Информация о клиенте -->
+            <RowDefinition Height="Auto"/>
+            <!-- Отображение уровня лояльности -->
             <RowDefinition Height="*"/>
             <!-- Таблица товаров -->
             <RowDefinition Height="Auto"/>
@@ -18,10 +20,10 @@
         </Grid.RowDefinitions>
 
         <!-- Информация о клиенте -->
-        <Border Grid.Row="0" Background="#FF3C3C3C" CornerRadius="10" Padding="20" Margin="0,0,0,15">
+        <Border Grid.Row="0" Background="#FF3C3C3C" CornerRadius="10" Padding="20" Margin="0,0,0,10">
             <StackPanel>
                 <TextBlock Text="Информация о клиенте" FontWeight="Bold" FontSize="18" Margin="0,0,0,10"/>
-                <UniformGrid Columns="2" Rows="2" Margin="0,0,0,5">
+                <UniformGrid Columns="2" Rows="3" Margin="0,0,0,5">
                     <TextBlock Text="ФИО:" FontWeight="Bold" FontSize="14"/>
                     <TextBlock Text="{Binding ClientName}" FontSize="14"/>
                     <TextBlock Text="Контактный номер:" FontWeight="Bold" FontSize="14"/>
@@ -32,8 +34,18 @@
             </StackPanel>
         </Border>
 
+        <!-- Блок уровня лояльности -->
+        <Border Grid.Row="1" Background="#FF3C3C3C" CornerRadius="10" Padding="15" Margin="0,0,0,15">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" >
+                <TextBlock Text="Уровень лояльности клиента:" FontWeight="Bold" FontSize="16" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding LoyaltyLevel}" FontSize="16" FontWeight="SemiBold" Margin="10,0,20,0" VerticalAlignment="Center" Foreground="#FF00FF7F"/>
+                <TextBlock Text="Персональная скидка:" FontWeight="Bold" FontSize="16" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding LoyaltyDiscount, StringFormat={}{0:F2}%}" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="#FF00FF7F"/>
+            </StackPanel>
+        </Border>
+
         <!-- Таблица товаров -->
-        <DataGrid x:Name="OrderProductsDataGrid" Grid.Row="1" AutoGenerateColumns="False"
+        <DataGrid x:Name="OrderProductsDataGrid" Grid.Row="2" AutoGenerateColumns="False"
                   Background="#FF1E1E1E" Foreground="White" BorderThickness="0"
                   Margin="0,0,0,15" CanUserAddRows="False" CanUserDeleteRows="False"
                   HeadersVisibility="Column" IsReadOnly="True" RowHeight="35" FontSize="14"
@@ -68,7 +80,7 @@
         </DataGrid>
 
         <!-- Итог и описание акций -->
-        <Border Grid.Row="2" Background="#FF3C3C3C" CornerRadius="10" Padding="20" Margin="0,0,0,15">
+        <Border Grid.Row="3" Background="#FF3C3C3C" CornerRadius="10" Padding="20" Margin="0,0,0,15">
             <StackPanel>
                 <TextBlock Text="Итоговая сумма заказа:" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
                 <TextBlock x:Name="TotalAmountTextBlock" FontSize="16" FontWeight="SemiBold" Foreground="#FF00FF7F"/>
@@ -80,7 +92,7 @@
             </StackPanel>
         </Border>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
             <Button Content="Подтвердить заказ"
                     Width="220" Height="50"
                     Background="#FF00A651" Foreground="White" FontSize="16"

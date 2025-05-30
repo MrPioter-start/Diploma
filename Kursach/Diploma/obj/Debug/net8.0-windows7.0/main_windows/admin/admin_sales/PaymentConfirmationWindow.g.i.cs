@@ -108,8 +108,7 @@ namespace Kursach.main_windows.admin {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/Diploma;V1.0.0.0;component/main_windows/admin/admin_sales/paymentconfirmationwin" +
-                    "dow.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/Diploma;component/main_windows/admin/admin_sales/paymentconfirmationwindow.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\..\..\main_windows\admin\admin_sales\PaymentConfirmationWindow.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

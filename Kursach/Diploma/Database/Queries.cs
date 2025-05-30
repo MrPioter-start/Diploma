@@ -822,8 +822,8 @@ WHERE
             string query = @"
     SELECT 
         p.Name AS 'Название',
-        SUM(td.Quantity) AS 'Всего продано',
-        ROUND(AVG(td.Price), 2) AS 'Стоимость'
+        p.Brand AS 'Бренд',
+        SUM(td.Quantity) AS 'Всего продано'
     FROM 
         TransactionDetails td
     INNER JOIN 
@@ -833,9 +833,10 @@ WHERE
     WHERE 
         t.Type = 'Продажа' AND 
         t.CreatedBy = @AdminUsername AND 
-        t.TransactionTime BETWEEN @StartDate AND @EndDate
+        t.TransactionTime BETWEEN @StartDate AND @EndDate 
     GROUP BY 
-        p.Name
+        p.Name,
+        p.Brand
     ORDER BY 
         SUM(td.Quantity) DESC";
 
@@ -846,6 +847,54 @@ WHERE
                 command.Parameters.AddWithValue("@EndDate", endDate);
             });
         }
+
+        public static DataTable GetCustomerLoyaltyInfo(int customerId)
+        {
+            string query = @"
+        SELECT 
+            c.TotalOrders,
+            c.LoyaltyLevelID,
+            l.LevelName,
+            l.DiscountPercentage
+        FROM Customers c
+        LEFT JOIN LoyaltyLevels l ON c.LoyaltyLevelID = l.LoyaltyLevelID
+        WHERE c.CustomerID = @CustomerID";
+
+            return DatabaseHelper.ExecuteQuery(query, cmd =>
+            {
+                cmd.Parameters.AddWithValue("@CustomerID", customerId);
+            });
+        }
+
+        public static DataTable GetLoyaltyLevelByTotalOrders(decimal totalOrders)
+        {
+            string query = @"
+        SELECT TOP 1 LoyaltyLevelID, LevelName, DiscountPercentage
+        FROM LoyaltyLevels
+        WHERE @TotalOrders >= MinOrderAmount
+        ORDER BY MinOrderAmount DESC";
+
+            return DatabaseHelper.ExecuteQuery(query, cmd =>
+            {
+                cmd.Parameters.AddWithValue("@TotalOrders", totalOrders);
+            });
+        }
+
+
+
+        public static void UpdateCustomerLoyaltyLevel(int customerId, int loyaltyLevelId)
+        {
+            string query = "UPDATE Customers SET LoyaltyLevelID = @LoyaltyLevelID WHERE CustomerID = @CustomerID";
+            DatabaseHelper.ExecuteNonQuery(query, cmd =>
+            {
+                cmd.Parameters.AddWithValue("@LoyaltyLevelID", loyaltyLevelId);
+                cmd.Parameters.AddWithValue("@CustomerID", customerId);
+            });
+        }
+
+
+
+
 
         [Obsolete]
         public static DataTable GetProductsForPromotion(int promotionId)

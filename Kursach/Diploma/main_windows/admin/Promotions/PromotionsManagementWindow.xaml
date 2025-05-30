@@ -40,6 +40,10 @@
             <Setter Property="Background" Value="#FFB00020"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Margin" Value="0"/>
+        </Style><Style x:Key="Loyalty" TargetType="Button" BasedOn="{StaticResource RoundedButton}">
+            <Setter Property="Background" Value="#FF292638"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="0"/>
         </Style>
 
         <!-- Стиль для DataGrid -->
@@ -112,6 +116,7 @@
                 <Button Content="Добавить акцию" Click="AddPromotion_Click" Style="{StaticResource RoundedButton}"/>
                 <Button Content="Редактировать акцию" Click="EditPromotion_Click" Style="{StaticResource YellowButton}"/>
                 <Button Content="Удалить акцию" Click="DeletePromotion_Click" Style="{StaticResource RedButton}"/>
+                <Button Content="Уровни лояльности" Click="ManageLoyaltyLevels_Click" Margin="10,0,0,0" Style="{StaticResource Loyalty}" />
             </StackPanel>
         </Border>
 

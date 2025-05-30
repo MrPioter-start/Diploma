@@ -22,6 +22,13 @@ namespace Diploma.main_windows.admin.Promotions
             PromotionForm.Visibility = Visibility.Collapsed;
         }
 
+        private void ManageLoyaltyLevels_Click(object sender, RoutedEventArgs e)
+        {
+            var window = new LoyaltyLevelsWindow();
+            window.ShowDialog();
+        }
+
+
         private void LoadPromotions()
         {
             try

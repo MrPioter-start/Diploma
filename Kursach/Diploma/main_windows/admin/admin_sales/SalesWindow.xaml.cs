@@ -7,6 +7,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using Kursach.Database.WarehouseApp.Database;
+using System.Windows.Input;
 
 
 namespace Kursach.main_windows.admin
@@ -61,42 +62,59 @@ namespace Kursach.main_windows.admin
             UpdateTotalPrice();
         }
 
-        private void IncreaseQuantity_Click(object sender, RoutedEventArgs e)
+        private async void IncreaseQuantity_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is string productName)
+            if (sender is Button button && button.DataContext is DataRowView rowView)
             {
-                var row = productsTable.AsEnumerable().FirstOrDefault(r => r.Field<string>("Name") == productName);
-                if (row != null)
-                {
-                    int currentQuantity = row.Field<int>("Quantity");
-                    int orderQuantity = row.Field<int>("OrderQuantity");
+                button.IsEnabled = false; 
 
-                    if (orderQuantity < currentQuantity)
-                    {
-                        row.SetField("OrderQuantity", orderQuantity + 1);
-                        UpdateTotalPrice();
-                    }
+                int quantity = rowView["Quantity"] != DBNull.Value ? Convert.ToInt32(rowView["Quantity"]) : 0;
+                int orderQuantity = rowView["OrderQuantity"] != DBNull.Value ? Convert.ToInt32(rowView["OrderQuantity"]) : 0;
+
+                if (orderQuantity < quantity)
+                {
+                    rowView["OrderQuantity"] = orderQuantity + 1;
+
+                    ProductsDataGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+                    ProductsDataGrid.CommitEdit(DataGridEditingUnit.Row, true);
+                    Keyboard.ClearFocus();
+                    FocusManager.SetFocusedElement(this, (IInputElement)TotalPriceTextBlock);
+
+                    UpdateTotalPrice();
                 }
+
+                await Task.Delay(50); 
+                button.IsEnabled = true;
             }
         }
+
+
+
+
+
 
         private void DecreaseQuantity_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is string productName)
+            if (sender is Button button && button.DataContext is DataRowView rowView)
             {
-                var row = productsTable.AsEnumerable().FirstOrDefault(r => r.Field<string>("Name") == productName);
-                if (row != null)
-                {
-                    int orderQuantity = row.Field<int>("OrderQuantity");
+                int orderQuantity = rowView["OrderQuantity"] != DBNull.Value ? Convert.ToInt32(rowView["OrderQuantity"]) : 0;
 
-                    if (orderQuantity > 0)
-                    {
-                        row.SetField("OrderQuantity", orderQuantity - 1);
-                        UpdateTotalPrice();
-                    }
+                if (orderQuantity > 0)
+                {
+                    rowView["OrderQuantity"] = orderQuantity - 1;
+
+                    ProductsDataGrid.CommitEdit(DataGridEditingUnit.Cell, true);
+                    ProductsDataGrid.CommitEdit(DataGridEditingUnit.Row, true);
+                    Keyboard.ClearFocus();
+                    FocusManager.SetFocusedElement(this, (IInputElement)TotalPriceTextBlock);
+
+                    UpdateTotalPrice();
                 }
             }
         }
+
+
+
 
         private decimal CalculateTotalPrice(System.Collections.Generic.List<DataRow> selectedProducts)
         {
@@ -160,39 +178,36 @@ namespace Kursach.main_windows.admin
 
         private void UpdateTotalPrice()
         {
-            if (TotalPriceTextBlock == null)
-            {
+            if (ProductsDataGrid.ItemsSource == null)
                 return;
-            }
 
-            decimal totalPrice = 0;
+            decimal total = 0;
 
-            if (productsTable != null && productsTable.Rows.Count > 0)
+            foreach (DataRowView rowView in ProductsDataGrid.ItemsSource)
             {
-                foreach (DataRow row in productsTable.Rows)
-                {
-                    int orderQuantity = row.Field<int>("OrderQuantity");
-                    decimal price = row.Field<decimal>("Price");
-                    totalPrice += price * orderQuantity;
-                }
+                int orderQuantity = rowView["OrderQuantity"] != DBNull.Value ? Convert.ToInt32(rowView["OrderQuantity"]) : 0;
+                decimal price = rowView["Price"] != DBNull.Value ? Convert.ToDecimal(rowView["Price"]) : 0;
+
+                total += orderQuantity * price;
             }
 
             if (discountValue > 0)
             {
                 if (isDiscountInPercent)
                 {
-                    totalPrice -= totalPrice * (discountValue / 100);
+                    total -= total * discountValue / 100;
                 }
                 else
                 {
-                    totalPrice -= discountValue;
+                    total -= discountValue;
                 }
 
-                totalPrice = Math.Max(totalPrice, 0);
+                total = Math.Max(total, 0);
             }
 
-            TotalPriceTextBlock.Text = $"{totalPrice:F2} byn";
+            TotalPriceTextBlock.Text = $"{total:F2} byn";
         }
+
 
         private void DiscountTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -358,86 +373,91 @@ namespace Kursach.main_windows.admin
 
         private void LoadOrderFromExcel_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog dialog = new OpenFileDialog
+            var dialog = new OpenFileDialog
             {
                 Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*"
             };
 
-            if (dialog.ShowDialog() == true)
+            if (dialog.ShowDialog() != true)
+                return;
+
+            try
             {
-                try
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                using (var package = new ExcelPackage(new FileInfo(dialog.FileName)))
                 {
-                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                    var worksheet = package.Workbook.Worksheets[0];
 
-                    using (var package = new ExcelPackage(new FileInfo(dialog.FileName)))
+                    // Считываем данные клиента из первой строки
+                    string clientName = worksheet.Cells[2, 1].Text.Trim();
+                    string clientEmail = worksheet.Cells[2, 2].Text.Trim();
+                    string clientContact = worksheet.Cells[2, 3].Text.Trim();
+
+                    var existing = Queries.GetCustomerByEmail(clientEmail);
+                    if (existing.Rows.Count == 0)
                     {
-                        var worksheet = package.Workbook.Worksheets[0];
+                        Queries.AddOrUpdateCustomer(clientName, clientEmail, clientContact, adminUsername);
+                    }
 
-                        var clientInfo = new
+                    var selectedProducts = new DataTable();
+                    selectedProducts.Columns.Add("ProductID", typeof(int));
+                    selectedProducts.Columns.Add("Name", typeof(string));
+                    selectedProducts.Columns.Add("Brand", typeof(string));
+                    selectedProducts.Columns.Add("OrderQuantity", typeof(int));
+                    selectedProducts.Columns.Add("Price", typeof(decimal));
+
+                    var productsTable = Queries.GetProductsBySalesFrequency(adminUsername);
+
+                    for (int row = 2; row <= worksheet.Dimension.Rows; row++)
+                    {
+                        string productName = worksheet.Cells[row, 4].Text.Trim();
+                        string brand = worksheet.Cells[row, 5].Text.Trim();
+                        if (!int.TryParse(worksheet.Cells[row, 6].Text.Trim(), out int qty) || qty <= 0)
+                            continue;
+
+                        var prod = productsTable.AsEnumerable()
+                            .FirstOrDefault(p =>
+                                p.Field<string>("Name").Equals(productName, StringComparison.OrdinalIgnoreCase) &&
+                                p.Field<string>("Brand").Equals(brand, StringComparison.OrdinalIgnoreCase));
+
+                        if (prod != null)
                         {
-                            ClientName = worksheet.Cells[2, 1].Text,
-                            Email = worksheet.Cells[2, 2].Text,
-                            ContactInfo = worksheet.Cells[2, 3].Text
-                        };
-
-                        var selectedProducts = new DataTable();
-                        selectedProducts.Columns.Add("ProductID", typeof(int));
-                        selectedProducts.Columns.Add("Name", typeof(string));
-                        selectedProducts.Columns.Add("Brand", typeof(string));
-                        selectedProducts.Columns.Add("OrderQuantity", typeof(int));
-                        selectedProducts.Columns.Add("Price", typeof(decimal));
-
-                        var productsTable = Queries.GetProductsBySalesFrequency(adminUsername);
-
-                        for (int row = 2; row <= worksheet.Dimension.Rows; row++)
-                        {
-                            string productName = worksheet.Cells[row, 4].Text.Trim();
-                            string brand = worksheet.Cells[row, 5].Text.Trim();
-                            string quantityStr = worksheet.Cells[row, 6].Text.Trim();
-
-                            if (!int.TryParse(quantityStr, out int quantity) || quantity <= 0)
-                            {
-                                continue;
-                            }
-
-                            var productRow = productsTable.AsEnumerable()
-                                .FirstOrDefault(p =>
-                                    p.Field<string>("Name").Equals(productName, StringComparison.OrdinalIgnoreCase) &&
-                                    p.Field<string>("Brand").Equals(brand, StringComparison.OrdinalIgnoreCase));
-
-                            if (productRow != null)
-                            {
-                                int productID = productRow.Field<int>("ProductID");
-                                decimal price = productRow.Field<decimal>("Price");
-
-                                selectedProducts.Rows.Add(productID, productName, brand, quantity, price);
-                            }
-                            else
-                            {
-                                MessageBox.Show($"Продукт '{productName}' с брендом '{brand}' не найден.", "Предупреждение");
-                            }
+                            selectedProducts.Rows.Add(
+                                prod.Field<int>("ProductID"),
+                                productName,
+                                brand,
+                                qty,
+                                prod.Field<decimal>("Price"));
                         }
-
-                        if (selectedProducts.Rows.Count > 0)
-                        {
-                            ApplyPromotionsToProductsFromExcel(selectedProducts, productsTable);
-
-                            var orderConfirmationWindow = new OrderConfirmationWindow(clientInfo, selectedProducts, adminUsername);
-                            orderConfirmationWindow.ShowDialog();
-                        }
-
                         else
                         {
-                            MessageBox.Show("Нет доступных продуктов для создания заказа.", "Предупреждение");
+                            MessageBox.Show(
+                                $"Товар «{productName}» (бренд «{brand}») не найден в справочнике.",
+                                "Предупреждение",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Warning);
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Ошибка при загрузке заказа: {ex.Message}", "Ошибка");
+
+                    if (selectedProducts.Rows.Count == 0)
+                    {
+                        MessageBox.Show("Нет ни одного корректного товара для заказа.", "Информация");
+                        return;
+                    }
+
+                    // Применяем акции и открываем окно подтверждения
+                    ApplyPromotionsToProductsFromExcel(selectedProducts, productsTable);
+                    var clientInfo = new { ClientName = clientName, Email = clientEmail, ContactInfo = clientContact };
+                    var wnd = new OrderConfirmationWindow(clientInfo, selectedProducts, adminUsername);
+                    wnd.ShowDialog();
                 }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке из Excel:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
+
 
         private void ApplyPromotionsToProductsFromExcel(DataTable selectedProducts, DataTable productsTable)
         {
@@ -586,17 +606,24 @@ namespace Kursach.main_windows.admin
 
                     case "Часто продаваемые":
                         LoadFrequentProducts();
-                        break;
-
-                    case "Нечасто продаваемые":
-                        LoadInfrequentProducts();
-                        break;
+                        break;  
                 }
             }
         }
 
         private void LoadFrequentProducts()
         {
+            Dictionary<int, int> savedQuantities = new();
+            if (ProductsDataGrid.ItemsSource is DataView currentView)
+            {
+                foreach (DataRowView rowView in currentView)
+                {
+                    int productId = rowView["ProductID"] != DBNull.Value ? Convert.ToInt32(rowView["ProductID"]) : 0;
+                    int orderQuantity = rowView["OrderQuantity"] != DBNull.Value ? Convert.ToInt32(rowView["OrderQuantity"]) : 0;
+                    savedQuantities[productId] = orderQuantity;
+                }
+            }
+
             var allProducts = Queries.GetProductsForSale(adminUsername);
 
             if (allProducts == null || !allProducts.Columns.Contains("TotalSoldQuantity"))
@@ -619,46 +646,24 @@ namespace Kursach.main_windows.admin
             var frequentProducts = filteredRows.CopyToDataTable();
 
             if (!frequentProducts.Columns.Contains("OrderQuantity"))
-            {
                 frequentProducts.Columns.Add("OrderQuantity", typeof(int));
-                foreach (DataRow row in frequentProducts.Rows)
-                {
+
+            foreach (DataRow row in frequentProducts.Rows)
+            {
+                int productId = row.Field<int>("ProductID");
+                if (savedQuantities.TryGetValue(productId, out int qty))
+                    row["OrderQuantity"] = qty;
+                else
                     row["OrderQuantity"] = 0;
-                }
             }
 
+            ApplyPromotionsToProducts(frequentProducts);
+
+            productsTable = frequentProducts;
             ProductsDataGrid.ItemsSource = frequentProducts.DefaultView;
-        }
 
-        private void LoadInfrequentProducts()
-        {
-            var allProducts = Queries.GetProductsForSale(adminUsername);
-
-            if (allProducts == null || !allProducts.Columns.Contains("TotalSoldQuantity"))
-            {
-                MessageBox.Show("Нет нечасто продаваемых товаров.", "Информация");
-                ProductsDataGrid.ItemsSource = null;
-                return;
-            }
-
-            var infrequentProducts = allProducts.AsEnumerable()
-                .Where(row => row.Field<int>("TotalSoldQuantity") < 5) 
-                .CopyToDataTable();
-
-            if (!infrequentProducts.Columns.Contains("OrderQuantity"))
-            {
-                infrequentProducts.Columns.Add("OrderQuantity", typeof(int));
-                foreach (DataRow row in infrequentProducts.Rows)
-                {
-                    row["OrderQuantity"] = 0;
-                }
-            }
-
-            productsTable = infrequentProducts;
-            ProductsDataGrid.ItemsSource = productsTable.DefaultView;
             UpdateTotalPrice();
         }
-
         private List<Promotion> GetActivePromotions()
         {
             string query = @"
@@ -697,7 +702,6 @@ WHERE
                 string brand = productRow["Brand"].ToString();
                 string category = productRow["CategoryName"].ToString();
 
-                // Вычисляем общую скидку для товара
                 decimal totalDiscount = 0;
 
                 foreach (var promotion in activePromotions)

@@ -14,124 +14,173 @@ namespace Diploma.main_windows
         private dynamic _clientInfo;
         private DataTable _selectedProducts;
         private string adminUsername;
+
+        public string LoyaltyLevel { get; private set; } = "Нет уровня";
+        public decimal LoyaltyDiscount { get; private set; } = 0m;
+        public string ClientName { get; set; }
+        public string ContactInfo { get; set; }
+        public string Email { get; set; }
         private List<Promotion> appliedPromotions;
 
         public OrderConfirmationWindow(dynamic clientInfo, DataTable selectedProducts, string adminUsername)
         {
             InitializeComponent();
-
             this.adminUsername = adminUsername;
             _clientInfo = clientInfo;
             _selectedProducts = selectedProducts;
 
-            EnsureTotalColumnExistsAndUpdate();
+            EnsureColumns();
+            DataContext = this;
 
-            DataContext = _clientInfo;
+            ClientName = _clientInfo.ClientName;
+            ContactInfo = _clientInfo.ContactInfo;
+            Email = _clientInfo.Email;
+
             OrderProductsDataGrid.ItemsSource = _selectedProducts.DefaultView;
 
+            LoadCustomerLoyaltyInfo();
+            ApplyDiscountsToProducts();
             CalculateAndDisplayTotal();
             LoadPromotionsDescription();
         }
 
-        private void EnsureTotalColumnExistsAndUpdate()
+        private void EnsureColumns()
         {
             if (!_selectedProducts.Columns.Contains("Total"))
                 _selectedProducts.Columns.Add("Total", typeof(decimal));
+            if (!_selectedProducts.Columns.Contains("DiscountedPrice"))
+                _selectedProducts.Columns.Add("DiscountedPrice", typeof(decimal));
 
             foreach (DataRow row in _selectedProducts.Rows)
             {
-                int quantity = Convert.ToInt32(row["OrderQuantity"]);
+                int qty = Convert.ToInt32(row["OrderQuantity"]);
                 decimal price = Convert.ToDecimal(row["Price"]);
-                row["Total"] = Math.Round(quantity * price, 2);
+                // Изначально DiscountedPrice = та же цена из таблицы (в ней уже лежит промо-цена, если товар акционный)
+                row["DiscountedPrice"] = price;
+                row["Total"] = Math.Round(price * qty, 2);
             }
         }
 
+        private void LoadCustomerLoyaltyInfo()
+        {
+            int id = Queries.GetCustomerIdByEmail(_clientInfo.Email);
+            if (id == 0) return;
+
+            var dt = Queries.GetCustomerLoyaltyInfo(id);
+            if (dt.Rows.Count == 0) return;
+
+            decimal sum = dt.Rows[0].Field<decimal>("TotalOrders");
+            int? curLvl = dt.Rows[0].Field<int?>("LoyaltyLevelID");
+            string curName = dt.Rows[0].Field<string>("LevelName");
+            decimal curDisc = dt.Rows[0].Field<decimal?>("DiscountPercentage") ?? 0m;
+
+            var dtLvl = Queries.GetLoyaltyLevelByTotalOrders(sum);
+            if (dtLvl.Rows.Count > 0)
+            {
+                int newLvl = dtLvl.Rows[0].Field<int>("LoyaltyLevelID");
+                string newName = dtLvl.Rows[0].Field<string>("LevelName");
+                decimal newDisc = dtLvl.Rows[0].Field<decimal>("DiscountPercentage");
+
+                if (curLvl != newLvl)
+                {
+                    Queries.UpdateCustomerLoyaltyLevel(id, newLvl);
+                    LoyaltyLevel = newName;
+                    LoyaltyDiscount = newDisc;
+                }
+                else
+                {
+                    LoyaltyLevel = curName;
+                    LoyaltyDiscount = curDisc;
+                }
+            }
+        }
+
+        private void ApplyDiscountsToProducts()
+        {
+            // Берём цену из колонки Price (в ней уже учтены акции), и сразу считаем лояльностную скидку
+            foreach (DataRow row in _selectedProducts.Rows)
+            {
+                int qty = row.Field<int>("OrderQuantity");
+                decimal basePrice = row.Field<decimal>("Price");      // здесь уже промо-цена, если есть
+                decimal finalPrice = Math.Round(basePrice * (1 - LoyaltyDiscount / 100m), 2);
+                row["DiscountedPrice"] = finalPrice;
+                row["Total"] = Math.Round(finalPrice * qty, 2);
+            }
+        }
 
         private void CalculateAndDisplayTotal()
         {
             decimal total = _selectedProducts.AsEnumerable()
-                .Sum(row => row.Field<int>("OrderQuantity") * row.Field<decimal>("Price"));
+                .Sum(r => r.Field<int>("OrderQuantity") * r.Field<decimal>("DiscountedPrice"));
 
-            TotalAmountTextBlock.Text = $"{total} byn";
+            TotalAmountTextBlock.Text = $"{total:F2} BYN";
+            if (LoyaltyDiscount > 0)
+                TotalAmountTextBlock.Text += $" (со скидкой уровня лояльности {LoyaltyDiscount:F2}%)";
+        }
+
+        private List<Promotion> GetActivePromotions()
+        {
+            // Этот метод больше нужен только для описания акций, но уже не влияет на цены
+            string query = @"
+SELECT p.PromotionID, pr.TargetType, pr.TargetValue, p.DiscountPercentage, p.PromotionName
+FROM Promotions p
+JOIN PromotionRules pr ON p.PromotionID = pr.PromotionID
+WHERE @Today BETWEEN p.StartDate AND p.EndDate";
+            return DatabaseHelper.ExecuteQuery(query, cmd =>
+            {
+                cmd.Parameters.AddWithValue("@Today", DateTime.Today);
+            }).AsEnumerable().Select(r => new Promotion
+            {
+                PromotionID = r.Field<int>("PromotionID"),
+                TargetType = r.Field<string>("TargetType"),
+                TargetValue = r.Field<string>("TargetValue"),
+                DiscountPercentage = r.Field<decimal>("DiscountPercentage"),
+                PromotionName = r.Field<string>("PromotionName")
+            }).ToList();
         }
 
         private void LoadPromotionsDescription()
         {
+            // Просто собираем описание, не трогаем расчёт
             appliedPromotions = GetAppliedPromotionsForProducts(_selectedProducts);
-            string description = GetPromotionDescription(appliedPromotions);
-            PromotionsDescriptionTextBlock.Text = description;
+            PromotionsDescriptionTextBlock.Text = GetPromotionDescription(appliedPromotions);
         }
 
         private List<Promotion> GetAppliedPromotionsForProducts(DataTable products)
         {
-            var activePromotions = GetActivePromotions();
-            var usedPromotions = new List<Promotion>();
+            var active = GetActivePromotions();
+            var used = new List<Promotion>();
 
-            foreach (DataRow product in products.Rows)
+            foreach (DataRow row in products.Rows)
             {
-                string name = product["Name"].ToString();
-                string brand = product["Brand"].ToString();
-                string category = product.Table.Columns.Contains("CategoryName") ? product["CategoryName"].ToString() : "";
+                string name = row["Name"].ToString();
+                string brand = row["Brand"].ToString();
+                string category = products.Columns.Contains("CategoryName")
+                    ? row["CategoryName"].ToString()
+                    : "";
 
-                foreach (var promo in activePromotions)
+                foreach (var promo in active)
                 {
-                    bool isApplicable = promo.TargetType switch
+                    bool ok = promo.TargetType switch
                     {
                         "Товар" => promo.TargetValue == name,
                         "Бренд" => promo.TargetValue == brand,
                         "Категория" => promo.TargetValue == category,
                         _ => false
                     };
-
-                    if (isApplicable && !usedPromotions.Any(p => p.PromotionID == promo.PromotionID))
-                        usedPromotions.Add(promo);
+                    if (ok && !used.Any(x => x.PromotionID == promo.PromotionID))
+                        used.Add(promo);
                 }
             }
-
-            return usedPromotions;
-        }
-
-        private List<Promotion> GetActivePromotions()
-        {
-            string query = @"
-SELECT 
-    p.PromotionID,
-    pr.TargetType,
-    pr.TargetValue,
-    p.DiscountPercentage,
-    p.PromotionName
-FROM 
-    Promotions p
-INNER JOIN 
-    PromotionRules pr ON p.PromotionID = pr.PromotionID
-WHERE 
-    @Today BETWEEN p.StartDate AND p.EndDate";
-
-            return DatabaseHelper.ExecuteQuery(query, cmd =>
-            {
-                cmd.Parameters.AddWithValue("@Today", DateTime.Today);
-            }).AsEnumerable().Select(row => new Promotion
-            {
-                PromotionID = row.Field<int>("PromotionID"),
-                TargetType = row.Field<string>("TargetType"),
-                TargetValue = row.Field<string>("TargetValue"),
-                DiscountPercentage = row.Field<decimal>("DiscountPercentage"),
-                PromotionName = row.Field<string>("PromotionName")
-            }).ToList();
+            return used;
         }
 
         private string GetPromotionDescription(List<Promotion> promotions)
         {
-            if (promotions == null || promotions.Count == 0)
-                return "В заказе нет акций.";
-
-            var sb = new StringBuilder();
-            sb.AppendLine("В заказе участвуют следующие акции:");
-            foreach (var promo in promotions)
-            {
-                sb.AppendLine($"- {promo.PromotionName} ({promo.TargetType}: {promo.TargetValue}) ({promo.DiscountPercentage:F2}%)");
-            }
-
+            if (promotions.Count == 0) return "В заказе нет акций.";
+            var sb = new StringBuilder("В заказе участвуют следующие акции:\n");
+            promotions.ForEach(p => sb.AppendLine(
+                $"- {p.PromotionName} ({p.TargetType}: {p.TargetValue}) — {p.DiscountPercentage:F2}%"));
             return sb.ToString();
         }
 
@@ -139,33 +188,39 @@ WHERE
         {
             try
             {
-                string clientEmail = _clientInfo.Email;
-                decimal totalAmount = CalculateTotal();
+                string email = _clientInfo.Email;
+                var cust = Queries.GetCustomerByEmail(email);
+                if (cust.Rows.Count == 0)
+                    Queries.AddOrUpdateCustomer(_clientInfo.ClientName, email, _clientInfo.ContactInfo, adminUsername);
+                int custId = Queries.GetCustomerIdByEmail(email);
 
-                var existingCustomer = Queries.GetCustomerByEmail(clientEmail);
-                if (existingCustomer.Rows.Count == 0)
+                decimal finalTotal = _selectedProducts.AsEnumerable()
+                    .Sum(r => r.Field<int>("OrderQuantity") * r.Field<decimal>("DiscountedPrice"));
+
+                // Формируем детали по колонке DiscountedPrice
+                var rows = _selectedProducts.AsEnumerable().Select(r =>
                 {
-                    Queries.AddOrUpdateCustomer(_clientInfo.ClientName, clientEmail, _clientInfo.ContactInfo, adminUsername);
-                }
+                    var nr = r.Table.NewRow();
+                    nr.ItemArray = r.ItemArray.Clone() as object[];
+                    nr["Price"] = r.Field<decimal>("DiscountedPrice");
+                    return nr;
+                }).ToList();
 
-                int customerId = Queries.GetCustomerIdByEmail(clientEmail);
-                var selectedProductsList = _selectedProducts.AsEnumerable().ToList();
-
-                Queries.AddTransactionOrder(selectedProductsList, totalAmount, adminUsername, customerId, "Оформлен", "Заказ");
-
-                MessageBox.Show("Заказ успешно оформлен!", "Успех");
-                this.Close();
+                Queries.AddTransactionOrder(rows, finalTotal, adminUsername, custId, "Оформлен", "Заказ");
+                MessageBox.Show($"Заказ оформлен. Итог: {finalTotal:F2} BYN", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                DialogResult = true;
+                Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при оформлении заказа: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private decimal CalculateTotal()
+        private void CancelOrder_Click(object sender, RoutedEventArgs e)
         {
-            return _selectedProducts.AsEnumerable()
-                .Sum(row => row.Field<int>("OrderQuantity") * row.Field<decimal>("Price"));
+            DialogResult = false;
+            Close();
         }
     }
 }
