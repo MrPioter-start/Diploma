@@ -1,17 +1,6 @@
 ﻿using Kursach.Database;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace Kursach.main_windows
 {
@@ -21,6 +10,7 @@ namespace Kursach.main_windows
     public partial class AdminCodeManagementWindow : Window
     {
         private string adminUsername;
+        private const int ManagerRoleID = 2;
 
         public AdminCodeManagementWindow(string username)
         {
@@ -31,98 +21,77 @@ namespace Kursach.main_windows
         private void CreateOrUpdateCode_Click(object sender, RoutedEventArgs e)
         {
             string code = CodeTextBox.Text.Trim();
-        
-            // Определяем роль
-            int roleID = 0;
-            if (RoleComboBox.SelectedItem is ComboBoxItem selectedItem)
+
+            if (string.IsNullOrEmpty(code))
             {
-                string selectedRole = selectedItem.Content.ToString();
-        
-                switch (selectedRole)
-                {
-                    case "Менеджер":
-                        roleID = 2;
-                        break;
-                    case "Пользователь":
-                        roleID = 3;
-                        break;
-                }
-            }
-        
-            if (string.IsNullOrEmpty(code) || roleID == 0)
-            {
-                MessageBox.Show("Введите код и выберите роль.", "Ошибка");
+                MessageBox.Show("Введите код.", "Ошибка");
                 return;
             }
-        
+
             try
             {
-                if (Queries.IsCodeExistsForAdmin(roleID, adminUsername))
+                if (Queries.IsCodeExistsForAdmin(ManagerRoleID, adminUsername))
                 {
-                    MessageBox.Show("Код для этой роли уже существует. Нажмите 'Изменить код'.", "Информация");
-                    UpdateCodeButton.Visibility = Visibility.Visible; 
-                    CreateCodeButton.Visibility = Visibility.Collapsed; 
+                    MessageBox.Show("Код уже существует. Нажмите 'Изменить код'.", "Информация");
+                    UpdateCodeButton.Visibility = Visibility.Visible;
+                    CreateCodeButton.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
-                    Queries.SaveAccessCode(code, roleID, adminUsername);
-                    MessageBox.Show($"Код успешно сохранен", "Успех");
+                    Queries.SaveAccessCode(code, ManagerRoleID, adminUsername);
+                    MessageBox.Show("Код успешно сохранен", "Успех");
                 }
-        
-                CodeTextBox.Clear(); 
+
+                CodeTextBox.Clear();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при создании кода: {ex.Message}", "Ошибка");
             }
         }
-        
+
         private void UpdateCode_Click(object sender, RoutedEventArgs e)
         {
             string code = CodeTextBox.Text.Trim();
-        
-            int roleID = 0;
-            if (RoleComboBox.SelectedItem is ComboBoxItem selectedItem)
+
+            if (string.IsNullOrEmpty(code))
             {
-                string selectedRole = selectedItem.Content.ToString();
-        
-                switch (selectedRole)
-                {
-                    case "Менеджер":
-                        roleID = 2;
-                        break;
-                    case "Пользователь":
-                        roleID = 3;
-                        break;
-                }
-            }
-        
-            if (string.IsNullOrEmpty(code) || roleID == 0)
-            {
-                MessageBox.Show("Введите код и выберите роль.", "Ошибка");
+                MessageBox.Show("Введите код.", "Ошибка");
                 return;
             }
-        
+
             try
             {
-                Queries.UpdateAccessCode(code, roleID, adminUsername);
-                MessageBox.Show($"Код успешно сохранен", "Успех");
-        
+                if (!Queries.IsCodeExistsForAdmin(ManagerRoleID, adminUsername))
+                {
+                    MessageBox.Show("Код для менеджера не найден. Сначала создайте код.", "Ошибка");
+                    return;
+                }
+
+                Queries.UpdateAccessCode(code, ManagerRoleID, adminUsername);
+                MessageBox.Show("Код успешно обновлён", "Успех");
+
                 CodeTextBox.Clear();
                 UpdateCodeButton.Visibility = Visibility.Collapsed;
-                CreateCodeButton.Visibility = Visibility.Visible; 
+                CreateCodeButton.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при обновлении кода: {ex.Message}", "Ошибка");
             }
         }
-        
+
+
         private void ViewCodes_Click(object sender, RoutedEventArgs e)
         {
-            var viewCodesWindow = new ViewCodesWindow(adminUsername); 
+            var viewCodesWindow = new ViewCodesWindow(adminUsername);
             viewCodesWindow.ShowDialog();
         }
-        
+
+        private void UserManagement(object sender, RoutedEventArgs e)
+        {
+            var userManagement = new UserManagementWindow(adminUsername);
+            userManagement.ShowDialog();
+        }
     }
 }

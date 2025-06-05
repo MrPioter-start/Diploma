@@ -1,4 +1,5 @@
 CREATE DATABASE WarehouseDB
+select * from Customers
 
 CREATE TABLE Roles (
     RoleID INT PRIMARY KEY IDENTITY(1,1),
@@ -13,6 +14,8 @@ CREATE TABLE Users (
     AccessCode NVARCHAR(50),
     FOREIGN KEY (RoleID) REFERENCES Roles(RoleID)
 );
+
+select * from Users
 
 CREATE TABLE Warehouses (
     WarehouseID INT PRIMARY KEY IDENTITY(1,1),
@@ -37,6 +40,8 @@ CREATE TABLE Orders (
     OrderTime DATETIME DEFAULT GETDATE(),
     AdminUsername NVARCHAR(50)
 );
+
+select * from PromotionRules
 
 ALTER TABLE Orders
 ADD CustomerID INT NULL;
@@ -63,7 +68,7 @@ CREATE TABLE OrderDetails (
     Price DECIMAL(18, 2),
     FOREIGN KEY (OrderID) REFERENCES Orders(OrderID)
 );
-
+select * from LoyaltyLevels
 CREATE TABLE Customers (
     CustomerID INT IDENTITY(1,1) PRIMARY KEY,
     Name NVARCHAR(255),
@@ -127,7 +132,12 @@ CREATE TABLE CashTransactions (
     AdminUsername NVARCHAR(50) NOT NULL,
     FOREIGN KEY (AdminUsername) REFERENCES Users(Username)
 );
+ALTER TABLE CashTransactions
+ADD CashID INT;
 
+ALTER TABLE CashTransactions
+ADD CONSTRAINT FK_CashTransactions_CashRegister
+FOREIGN KEY (CashID) REFERENCES CashRegister(CashID);
 
 CREATE TABLE Products (
     ProductID INT PRIMARY KEY IDENTITY(1,1),
@@ -264,6 +274,8 @@ CREATE TABLE Reports (
     FOREIGN KEY (GeneratedBy) REFERENCES Users(Username),
     FOREIGN KEY (TransactionID) REFERENCES Transactions(TransactionID)
 );
+select * from Customers
+
 ALTER TABLE Products
 ADD Brand NVARCHAR(100) NULL;
 
@@ -335,6 +347,12 @@ DELETE FROM Users
 ALTER TABLE Customers
 ADD  PersonalDiscount DECIMAL(5, 2) DEFAULT 0;
 
+ALTER TABLE Customers
+ADD LoyaltyLevelID INT;
+ALTER TABLE Customers
+ADD CONSTRAINT FK_Customers_LoyaltyLevels
+FOREIGN KEY (LoyaltyLevelID) REFERENCES LoyaltyLevels(LoyaltyLevelID);
+
 CREATE TABLE LoyaltyLevels (
     LoyaltyLevelID INT PRIMARY KEY,
     LevelName NVARCHAR(50),
@@ -342,11 +360,8 @@ CREATE TABLE LoyaltyLevels (
     DiscountPercentage DECIMAL(5, 2)
 );
 
--- Добавление уровней лояльности
-INSERT INTO LoyaltyLevels (LoyaltyLevelID, LevelName, MinOrderAmount, DiscountPercentage) VALUES
-(1, 'Бронзовый', 1000, 5.00),
-(2, 'Серебряный', 4000, 10.00),
-(3, 'Золотой', 7000, 15.00);
+ALTER TABLE LoyaltyLevels
+ADD LoyaltyLevelID INT IDENTITY(1,1) PRIMARY KEY;
 
 ALTER TABLE LoyaltyLevels
 ADD AdminUsername NVARCHAR(50);
@@ -355,12 +370,16 @@ ALTER TABLE LoyaltyLevels
 ADD CONSTRAINT FK_LoyaltyLevels_Users
 FOREIGN KEY (AdminUsername) REFERENCES Users(Username);
 
-INSERT INTO LoyaltyLevels (LoyaltyLevelID, LevelName, MinOrderAmount, DiscountPercentage, AdminUsername) VALUES
-(1, 'Бронзовый', 1000, 5.00, 'admin'),
-(2, 'Серебряный', 4000, 10.00, 'admin'),
-(3, 'Золотой', 7000, 15.00, 'admin');
+Delete from LoyaltyLevels
 
-
+INSERT INTO LoyaltyLevels (LevelName, MinOrderAmount, DiscountPercentage, AdminUsername) VALUES
+('Бронзовый', 1000, 5.00, 'admin'),
+('Серебряный', 4000, 10.00, 'admin'),
+('Золотой', 7000, 15.00, 'admin');
+INSERT INTO LoyaltyLevels (LevelName, MinOrderAmount, DiscountPercentage, AdminUsername)
+VALUES ('Gold', 1000, 10, 'admin');
+select * from LoyaltyLevels
+select * from Customers
 CREATE TABLE PromotionRules (
     RuleID INT IDENTITY(1,1) PRIMARY KEY,
     PromotionID INT NOT NULL, -- Ссылка на акцию
@@ -368,6 +387,14 @@ CREATE TABLE PromotionRules (
     TargetValue NVARCHAR(255) NOT NULL, -- Значение цели (например, название товара, бренда или категории)
     FOREIGN KEY (PromotionID) REFERENCES Promotions(PromotionID)
 );
+
+ALTER TABLE dbo.Customers
+ADD CONSTRAINT FK_Customers_LoyaltyLevels
+    FOREIGN KEY (LoyaltyLevelID)
+    REFERENCES dbo.LoyaltyLevels (LoyaltyLevelID)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL;  -- или NO ACTION / RESTRICT в зависимости от бизнес-логики
+GO
 
 select * from PromotionRules
 select * from Promotions
@@ -418,6 +445,11 @@ CREATE TABLE Transactions (
     FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID),
     FOREIGN KEY (CreatedBy) REFERENCES Users(Username)
 );
+
+
+delete from TransactionDetails
+delete from Transactions
+delete from Returns
 
 select * from TransactionDetails
 select * from Customers

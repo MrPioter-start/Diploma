@@ -9,5 +9,6 @@
 //------------------------------------------------------------------------------
 
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("main_windows/admin/help/help.html")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("main_windows/manager/help/help.html")]
 
 

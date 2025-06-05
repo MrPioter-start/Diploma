@@ -16,6 +16,7 @@ namespace Kursach
     public partial class AdminWindow : Window
     {
         private string adminUsername;
+        private DataTable allTransactionsTable;
 
         public AdminWindow(string username)
         {
@@ -59,14 +60,49 @@ namespace Kursach
         }
         private void LoadTransactionsHistory()
         {
-            DataTable transactionsTable = Queries.GetTransactionsHistory(adminUsername);
-            SalesHistoryDataGrid.ItemsSource = transactionsTable.DefaultView;
+            try
+            {
+                allTransactionsTable = Queries.GetTransactionsHistory(adminUsername);
+
+                if (allTransactionsTable == null || allTransactionsTable.Rows.Count == 0)
+                {
+                    SalesHistoryDataGrid.ItemsSource = null;
+                    return;
+                }
+
+                ApplyTransactionTypeFilter(); 
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки данных о транзакциях: {ex.Message}", "Ошибка");
+            }
         }
-        private void UserManagement(object sender, RoutedEventArgs e)
+
+        private void ApplyTransactionTypeFilter()
         {
-            var userManagement = new UserManagementWindow(adminUsername);
-            userManagement.ShowDialog();
+            if (allTransactionsTable == null) return;
+
+            string selectedType = (TransactionTypeFilterComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString();
+
+            if (selectedType == "Все" || string.IsNullOrEmpty(selectedType))
+            {
+                SalesHistoryDataGrid.ItemsSource = allTransactionsTable.DefaultView;
+            }
+            else
+            {
+                DataView filteredView = new DataView(allTransactionsTable)
+                {
+                    RowFilter = $"Type = '{selectedType}'"
+                };
+                SalesHistoryDataGrid.ItemsSource = filteredView;
+            }
         }
+
+        private void TransactionTypeFilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ApplyTransactionTypeFilter();
+        }
+
 
         private void AdminCode(object sender, RoutedEventArgs e)
         {
@@ -92,14 +128,21 @@ namespace Kursach
         {
             if (SalesHistoryDataGrid.SelectedItem is DataRowView selectedRow)
             {
-                int transactionId = Convert.ToInt32(selectedRow["TransactionID"]);
+                try
+                {
+                    int transactionId = Convert.ToInt32(selectedRow["TransactionID"]);
 
-                // Получаем детали транзакции
-                DataTable transactionDetails = Queries.GetTransactionDetails(transactionId);
+                    DataTable transactionDetails = Queries.GetTransactionDetails(transactionId);
 
-                // Открываем окно с деталями
-                var detailsWindow = new TransactionDetailsWindow(transactionDetails);
-                detailsWindow.ShowDialog();
+                    var detailsWindow = new TransactionDetailsWindow(transactionDetails, transactionId, adminUsername);
+                    detailsWindow.Closed += (s, ev) => LoadCashAmount();
+                    detailsWindow.Closed += (s, ev) => LoadTransactionsHistory();
+                    detailsWindow.ShowDialog();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при открытии окна деталей: {ex.Message}", "Ошибка");
+                }
             }
         }
 

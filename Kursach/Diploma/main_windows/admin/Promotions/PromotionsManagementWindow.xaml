@@ -1,9 +1,109 @@
 ﻿<Window x:Class="Diploma.main_windows.admin.Promotions.PromotionsManagementWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Управление акциями" Height="600" Width="800"
+        Title="Управление акциями" Height="666" Width="800"
         Background="#FF2D2D30" Foreground="White"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <!-- Стиль для кнопок с закруглениями -->
+        <Style x:Key="RoundedButton" TargetType="Button">
+            <Setter Property="Background" Value="#FF00A651"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="6" 
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="5"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Стили для кнопок с другим цветом (жёлтая и красная) -->
+        <Style x:Key="YellowButton" TargetType="Button" BasedOn="{StaticResource RoundedButton}">
+            <Setter Property="Background" Value="#FFD4AF37"/>
+            <Setter Property="Foreground" Value="Black"/>
+        </Style>
+        <Style x:Key="RedButton" TargetType="Button" BasedOn="{StaticResource RoundedButton}">
+            <Setter Property="Background" Value="#FFB00020"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style><Style x:Key="Loyalty" TargetType="Button" BasedOn="{StaticResource RoundedButton}">
+            <Setter Property="Background" Value="#FF292638"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+
+        <!-- Стиль для DataGrid -->
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#FF3C3C3C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RowBackground" Value="#FF3C3C3C"/>
+            <Setter Property="AlternatingRowBackground" Value="#FF323232"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <!-- Стиль строк DataGrid с ховером -->
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="#FF3C3C3C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FF505050"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#FF00A651"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#FF4D4D4D"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#FF555555"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#FF555555"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style TargetType="DatePicker">
+            <Setter Property="Background" Value="#FF555555"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -11,85 +111,89 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Панель инструментов -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Background="#FF4D4D4D" Margin="20">
-            <Button Content="Добавить акцию" Click="AddPromotion_Click" 
-                    Background="#FF00A651" Foreground="White" 
-                    BorderThickness="0" Padding="10,5" Margin="0,0,10,0" 
-                    FontSize="14" Cursor="Hand"/>
-            <Button Content="Редактировать акцию" Click="EditPromotion_Click" 
-                    Background="#FFD4AF37" Foreground="White" 
-                    BorderThickness="0" Padding="10,5" Margin="0,0,10,0" 
-                    FontSize="14" Cursor="Hand"/>
-            <Button Content="Удалить акцию" Click="DeletePromotion_Click" 
-                    Background="#FFD4AF37" Foreground="White" 
-                    BorderThickness="0" Padding="10,5" 
-                    FontSize="14" Cursor="Hand"/>
-        </StackPanel>
+        <Border Grid.Row="0" Background="#FF4D4D4D" Margin="25" Padding="10" CornerRadius="8">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Добавить акцию" Click="AddPromotion_Click" Style="{StaticResource RoundedButton}"/>
+                <Button Content="Редактировать акцию" Click="EditPromotion_Click" Style="{StaticResource YellowButton}"/>
+                <Button Content="Удалить акцию" Click="DeletePromotion_Click" Style="{StaticResource RedButton}"/>
+                <Button Content="Уровни лояльности" Click="ManageLoyaltyLevels_Click" Margin="10,0,0,0" Style="{StaticResource Loyalty}" />
+            </StackPanel>
+        </Border>
 
-        <!-- Список акций -->
-        <DataGrid x:Name="PromotionsDataGrid" Grid.Row="1" AutoGenerateColumns="False" 
-                  Background="#FF3C3C3C" Foreground="White" BorderThickness="0" 
-                  Margin="20,10" CanUserAddRows="False" CanUserDeleteRows="False">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Название" Binding="{Binding PromotionName}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Скидка (%)" Binding="{Binding DiscountPercentage}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Дата начала" Binding="{Binding StartDate}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Дата окончания" Binding="{Binding EndDate}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Создано" Binding="{Binding CreatedBy}" Width="*" IsReadOnly="True"/>
-            </DataGrid.Columns>
+        <Border Grid.Row="1" Margin="20,10,20,10" Background="#FF3C3C3C" CornerRadius="8" Padding="5">
+            <DataGrid x:Name="PromotionsDataGrid" AutoGenerateColumns="False" 
+                      CanUserAddRows="False" CanUserDeleteRows="False" 
+                      HeadersVisibility="Column"
+                      RowHeight="35"
+                      SelectionMode="Single"
+                      BorderThickness="0"
+                      Background="Transparent"
+                      Foreground="White"
+                      GridLinesVisibility="None">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Название" Binding="{Binding PromotionName}" Width="*" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Скидка (%)" Binding="{Binding DiscountPercentage}" Width="120" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Дата начала" Width="140" IsReadOnly="True">
+                        <DataGridTextColumn.Binding>
+                            <Binding Path="StartDate" StringFormat="dd.MM.yyyy"/>
+                        </DataGridTextColumn.Binding>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Дата окончания" Width="140" IsReadOnly="True">
+                        <DataGridTextColumn.Binding>
+                            <Binding Path="EndDate" StringFormat="dd.MM.yyyy"/>
+                        </DataGridTextColumn.Binding>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Создано" Binding="{Binding CreatedBy}" Width="140" IsReadOnly="True" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
 
-            <!-- Стиль строк DataGrid -->
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow">
-                    <Setter Property="Background" Value="#FF3C3C3C"/>
-                    <Setter Property="Foreground" Value="White"/>
-                    <Setter Property="FontSize" Value="14"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                </Style>
-            </DataGrid.RowStyle>
+        <Border Grid.Row="2" Background="#FF4D4D4D" Margin="20" Padding="15" CornerRadius="8" Visibility="Collapsed" x:Name="PromotionForm">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-            <!-- Стиль заголовков столбцов -->
-            <DataGrid.ColumnHeaderStyle>
-                <Style TargetType="DataGridColumnHeader">
-                    <Setter Property="Background" Value="#FF4D4D4D"/>
-                    <Setter Property="Foreground" Value="White"/>
-                    <Setter Property="FontWeight" Value="Bold"/>
-                    <Setter Property="FontSize" Value="14"/>
-                    <Setter Property="Padding" Value="10"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                </Style>
-            </DataGrid.ColumnHeaderStyle>
-        </DataGrid>
+                <Button Content="✖"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        FontSize="16"
+                        Foreground="White"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        Cursor="Hand"
+                        Click="ClosePromotionForm_Click"
+                        ToolTip="Закрыть"
+                        Width="30"
+                        Height="30"/>
+                
+                <StackPanel Orientation="Vertical" Grid.Row="1" Margin="0,10,0,0">
+                    <TextBlock Text="Название акции:" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="PromotionNameTextBox" Margin="0,0,0,10"/>
 
-        <!-- Форма добавления/редактирования акции -->
-        <StackPanel Grid.Row="2" Orientation="Vertical" Background="#FF4D4D4D" Visibility="Collapsed" x:Name="PromotionForm">
-            <TextBlock Text="Название акции:" FontWeight="Bold" Margin="0,0,0,5"/>
-            <TextBox x:Name="PromotionNameTextBox" Background="#FF555555" Foreground="White" Margin="0,0,0,10" Padding="5"/>
+                    <TextBlock Text="Процент скидки:" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="DiscountPercentageTextBox" Margin="0,0,0,10"/>
 
-            <TextBlock Text="Процент скидки:" FontWeight="Bold" Margin="0,0,0,5"/>
-            <TextBox x:Name="DiscountPercentageTextBox" Background="#FF555555" Foreground="White" Margin="0,0,0,10" Padding="5"/>
+                    <TextBlock Text="Дата начала:" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <DatePicker x:Name="StartDatePicker" Margin="0,0,0,10"/>
 
-            <TextBlock Text="Дата начала:" FontWeight="Bold" Margin="0,0,0,5"/>
-            <DatePicker x:Name="StartDatePicker" Background="#FF555555" Foreground="Black" Margin="0,0,0,10" Padding="5"/>
+                    <TextBlock Text="Дата окончания:" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <DatePicker x:Name="EndDatePicker" Margin="0,0,0,10"/>
 
-            <TextBlock Text="Дата окончания:" FontWeight="Bold" Margin="0,0,0,5"/>
-            <DatePicker x:Name="EndDatePicker" Background="#FF555555" Foreground="Black" Margin="0,0,0,10" Padding="5"/>
+                    <TextBlock Text="Применить к:" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <ComboBox x:Name="TargetTypeComboBox" Margin="0,0,0,10" Foreground="Black">
+                        <ComboBoxItem Content="Товар"/>
+                        <ComboBoxItem Content="Бренд"/>
+                        <ComboBoxItem Content="Категория"/>
+                    </ComboBox>
 
-            <TextBlock Text="Применить к:" FontWeight="Bold" Margin="0,0,0,5"/>
-            <ComboBox x:Name="TargetTypeComboBox" Background="#FF555555" Foreground="Black" Margin="0,0,0,10">
-                <ComboBoxItem Content="Товар"/>
-                <ComboBoxItem Content="Бренд"/>
-                <ComboBoxItem Content="Категория"/>
-            </ComboBox>
+                    <TextBlock Text="Значение:" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <ComboBox x:Name="TargetValueComboBox" Margin="0,0,0,10" Foreground="Black"/>
 
-            <TextBlock Text="Значение:" FontWeight="Bold" Margin="0,0,0,5"/>
-            <TextBox x:Name="TargetValueTextBox" Background="#FF555555" Foreground="White" Margin="0,0,0,10" Padding="5"/>
-
-            <Button x:Name="SavePromotionButton" Content="Сохранить" Click="SavePromotion_Click" 
-            Background="#FF00A651" Foreground="White" 
-            BorderThickness="0" Padding="10,5" Margin="0,10,0,0" 
-            FontSize="14" Cursor="Hand"/>
-        </StackPanel>
+                    <Button x:Name="SavePromotionButton" Content="Сохранить" Click="SavePromotionButton_Click" Style="{StaticResource RoundedButton}" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

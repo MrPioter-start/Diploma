@@ -14,7 +14,7 @@ namespace Kursach.Database
     string adminUsername,
     int? customerID = null,
     string status = null,
-    string type = "Продажа")
+    string type = "Локальная покупка")
         {
             string transactionQuery = @"
         INSERT INTO Transactions (Type, CustomerID, Status, CreatedBy, Total)
@@ -47,6 +47,32 @@ namespace Kursach.Database
             }
         }
 
+        public static string GetTransactionStatus(int transactionId)
+        {
+            string query = "SELECT Status FROM Transactions WHERE TransactionID = @TransactionID";
+
+            object result = DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
+            });
+
+            return result?.ToString() ?? string.Empty;
+        }
+
+        public static string GetTransactionType(int transactionId)
+        {
+            string query = "SELECT Type FROM Transactions WHERE TransactionID = @TransactionID";
+
+            object result = DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
+            });
+
+            return result?.ToString() ?? string.Empty;
+        }
+
+
+
         public static DataTable GetOrders(string adminUsername)
         {
             string query = @"
@@ -72,28 +98,29 @@ namespace Kursach.Database
             });
         }
 
-        public static int AddOrUpdateCustomer(string name, string email, string contactInfo)
+        public static int AddOrUpdateCustomer(string name, string email, string contactInfo, string adminUsername)
         {
             string query = @"
-        IF NOT EXISTS (SELECT 1 FROM Customers WHERE Email = @Email)
-        BEGIN
-            INSERT INTO Customers (Name, Email, ContactInfo, TotalOrders)
-            VALUES (@Name, @Email, @ContactInfo, 0);
-        END
-        ELSE
-        BEGIN
-            UPDATE Customers
-            SET Name = @Name, ContactInfo = @ContactInfo
-            WHERE Email = @Email;
-        END
+IF NOT EXISTS (SELECT 1 FROM Customers WHERE Email = @Email AND AdminUsername = @AdminUsername)
+BEGIN
+    INSERT INTO Customers (Name, Email, ContactInfo, TotalOrders, AdminUsername)
+    VALUES (@Name, @Email, @ContactInfo, 0, @AdminUsername);
+END
+ELSE
+BEGIN
+    UPDATE Customers
+    SET Name = @Name, ContactInfo = @ContactInfo
+    WHERE Email = @Email AND AdminUsername = @AdminUsername;
+END
 
-        SELECT CustomerID FROM Customers WHERE Email = @Email;";
+SELECT CustomerID FROM Customers WHERE Email = @Email AND AdminUsername = @AdminUsername;";
 
             return Convert.ToInt32(DatabaseHelper.ExecuteScalar(query, command =>
             {
                 command.Parameters.AddWithValue("@Name", name);
                 command.Parameters.AddWithValue("@Email", email);
                 command.Parameters.AddWithValue("@ContactInfo", contactInfo);
+                command.Parameters.AddWithValue("@AdminUsername", adminUsername); // Добавляем параметр AdminUsername
             }));
         }
 
@@ -162,50 +189,38 @@ namespace Kursach.Database
             });
         }
 
-        public static void ReturnProduct(int returnQuantity, int transactionId, int productId)
-        {
-            // Обновляем количество товара на складе
-            string updateProductQuery = @"
-        UPDATE Products 
-        SET Quantity = Quantity + @ReturnQuantity 
-        WHERE ProductID = @ProductID";
-
-            DatabaseHelper.ExecuteNonQuery(updateProductQuery, command =>
-            {
-                command.Parameters.AddWithValue("@ReturnQuantity", returnQuantity);
-                command.Parameters.AddWithValue("@ProductID", productId);
-            });
-
-            // Обновляем детали транзакции
-            string updateDetailsQuery = @"
-        UPDATE TransactionDetails 
-        SET Quantity = Quantity - @ReturnQuantity 
-        WHERE TransactionID = @TransactionID AND ProductID = @ProductID";
-
-            DatabaseHelper.ExecuteNonQuery(updateDetailsQuery, command =>
-            {
-                command.Parameters.AddWithValue("@ReturnQuantity", returnQuantity);
-                command.Parameters.AddWithValue("@TransactionID", transactionId);
-                command.Parameters.AddWithValue("@ProductID", productId);
-            });
-        }
-
         public static DataTable GetTransactionsHistory(string adminUsername)
         {
+            if (string.IsNullOrWhiteSpace(adminUsername))
+            {
+                throw new ArgumentException("Имя пользователя администратора не может быть пустым.");
+            }
+
             string query = @"
-        SELECT 
-            TransactionID,
-            Type,
-            CustomerID,
-            Status,
-            Total,
-            TransactionTime
-        FROM 
-            Transactions
-        WHERE 
-            CreatedBy = @CreatedBy
-        ORDER BY 
-            TransactionTime DESC";
+SELECT 
+    t.TransactionID,
+    t.Type,
+    CASE 
+        WHEN c.CustomerID IS NULL THEN 'Локально' -- Если клиент отсутствует
+        ELSE c.Name -- Имя клиента
+    END AS CustomerName,
+    CASE 
+        WHEN t.Status IS NULL THEN 'Завершен' -- Если статус отсутствует
+        ELSE t.Status
+    END AS Status,
+    t.Total,
+    t.TransactionTime,
+    u.Username AS CreatedBy -- Имя администратора, который создал транзакцию
+FROM 
+    Transactions t
+LEFT JOIN 
+    Customers c ON t.CustomerID = c.CustomerID -- LEFT JOIN для обработки случаев без клиента
+INNER JOIN 
+    Users u ON t.CreatedBy = u.Username
+WHERE 
+    t.CreatedBy = @CreatedBy
+ORDER BY 
+    t.TransactionTime DESC";
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
@@ -279,12 +294,17 @@ namespace Kursach.Database
 
         public static DataTable GetProductsBySalesFrequency(string adminUsername)
         {
+            if (string.IsNullOrEmpty(adminUsername))
+            {
+                throw new ArgumentException("Имя пользователя администратора не может быть пустым.");
+            }
+
             string query = @"
 SELECT 
-    p.ProductID,
-    p.Name,
+    p.ProductID, 
+    p.Name, 
     p.Brand,
-    c.CategoryName,
+    c.CategoryName, 
     p.Price,
     p.Quantity,
     p.Size,
@@ -363,6 +383,17 @@ ORDER BY
             {
                 command.Parameters.AddWithValue("@Email", customerEmail);
             }) is decimal totalOrders ? totalOrders : 0;
+        }
+
+        public static decimal GetTransactionTotal(int transactionId)
+        {
+            string query = "SELECT Total FROM Transactions WHERE TransactionID = @TransactionID";
+            object result = DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
+            });
+
+            return result != null && result != DBNull.Value ? Convert.ToDecimal(result) : 0;
         }
 
         public static void UpdateOrderStatus(int transactionId, string newStatus)
@@ -598,7 +629,8 @@ ORDER BY
             c.Email,
             c.ContactInfo,
             t.Total AS TotalAmount,
-            t.Status
+            t.Status,
+            t.TransactionTime
         FROM 
             Transactions t
         LEFT JOIN 
@@ -724,26 +756,23 @@ WHERE
         public static DataTable GetSalesReport(DateTime startDate, DateTime endDate, string adminUsername)
         {
             string query = @"
-        SELECT 
-            t.Total AS 'Сумма продажи',
-            t.TransactionTime AS 'Время продажи',
-            c.Name AS 'Имя клиента',
-            td.ProductID,
-            p.Name AS 'Наименование товара',
-            td.Quantity AS 'Количество',
-            td.Price AS 'Цена за единицу'
-        FROM 
-            Transactions t
-        LEFT JOIN 
-            Customers c ON t.CustomerID = c.CustomerID
-        LEFT JOIN 
-            TransactionDetails td ON t.TransactionID = td.TransactionID
-        LEFT JOIN 
-            Products p ON td.ProductID = p.ProductID
-        WHERE 
-            t.Type = 'Продажа' AND 
-            t.CreatedBy = @AdminUsername AND 
-            t.TransactionTime BETWEEN @StartDate AND @EndDate";
+SELECT 
+    t.Total AS 'Сумма продажи',
+    t.TransactionTime AS 'Время продажи',
+    CONCAT(p.Name, ' ', p.Brand) AS 'Наименование товара',
+    td.Quantity AS 'Количество',
+    td.Price AS 'Цена за единицу'
+FROM 
+    Transactions t
+LEFT JOIN 
+    TransactionDetails td ON t.TransactionID = td.TransactionID
+LEFT JOIN 
+    Products p ON td.ProductID = p.ProductID
+WHERE 
+    (t.Type = 'Локальная покупка' OR t.Type = 'Заказ') AND
+    t.CreatedBy = @AdminUsername AND 
+    t.TransactionTime BETWEEN @StartDate AND @EndDate";
+
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
@@ -804,24 +833,27 @@ WHERE
         public static DataTable GetPopularProductsReport(DateTime startDate, DateTime endDate, string adminUsername)
         {
             string query = @"
-        SELECT 
-            p.Name AS 'Название',
-            SUM(td.Quantity) AS 'Всего продано',
-            AVG(td.Price) AS 'Стоимость'
-        FROM 
-            TransactionDetails td
-        INNER JOIN 
-            Transactions t ON td.TransactionID = t.TransactionID
-        INNER JOIN 
-            Products p ON td.ProductID = p.ProductID
-        WHERE 
-            t.Type = 'Продажа' AND 
-            t.CreatedBy = @AdminUsername AND 
-            t.TransactionTime BETWEEN @StartDate AND @EndDate
-        GROUP BY 
-            p.Name
-        ORDER BY 
-            SUM(td.Quantity) DESC"; 
+SELECT 
+    p.Name AS 'Название',
+    p.Brand AS 'Бренд',
+    SUM(td.Quantity) AS 'Всего продано'
+FROM 
+    TransactionDetails td
+INNER JOIN 
+    Transactions t ON td.TransactionID = t.TransactionID
+INNER JOIN 
+    Products p ON td.ProductID = p.ProductID
+WHERE 
+    t.Type = 'Локальная покупка' AND 
+    t.CreatedBy = @AdminUsername AND 
+    t.TransactionTime BETWEEN @StartDate AND @EndDate 
+GROUP BY 
+    p.Name,
+    p.Brand
+HAVING 
+    SUM(td.Quantity) > 0
+ORDER BY 
+    SUM(td.Quantity) DESC";
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
@@ -830,6 +862,55 @@ WHERE
                 command.Parameters.AddWithValue("@EndDate", endDate);
             });
         }
+
+
+        public static DataTable GetCustomerLoyaltyInfo(int customerId)
+        {
+            string query = @"
+        SELECT 
+            c.TotalOrders,
+            c.LoyaltyLevelID,
+            l.LevelName,
+            l.DiscountPercentage
+        FROM Customers c
+        LEFT JOIN LoyaltyLevels l ON c.LoyaltyLevelID = l.LoyaltyLevelID
+        WHERE c.CustomerID = @CustomerID";
+
+            return DatabaseHelper.ExecuteQuery(query, cmd =>
+            {
+                cmd.Parameters.AddWithValue("@CustomerID", customerId);
+            });
+        }
+
+        public static DataTable GetLoyaltyLevelByTotalOrders(decimal totalOrders)
+        {
+            string query = @"
+        SELECT TOP 1 LoyaltyLevelID, LevelName, DiscountPercentage
+        FROM LoyaltyLevels
+        WHERE @TotalOrders >= MinOrderAmount
+        ORDER BY MinOrderAmount DESC";
+
+            return DatabaseHelper.ExecuteQuery(query, cmd =>
+            {
+                cmd.Parameters.AddWithValue("@TotalOrders", totalOrders);
+            });
+        }
+
+
+
+        public static void UpdateCustomerLoyaltyLevel(int customerId, int loyaltyLevelId)
+        {
+            string query = "UPDATE Customers SET LoyaltyLevelID = @LoyaltyLevelID WHERE CustomerID = @CustomerID";
+            DatabaseHelper.ExecuteNonQuery(query, cmd =>
+            {
+                cmd.Parameters.AddWithValue("@LoyaltyLevelID", loyaltyLevelId);
+                cmd.Parameters.AddWithValue("@CustomerID", customerId);
+            });
+        }
+
+
+
+
 
         [Obsolete]
         public static DataTable GetProductsForPromotion(int promotionId)
@@ -880,28 +961,40 @@ WHERE
             })?.ToString();
         }
 
-        [Obsolete]
-        public static DataTable GetProducts(string adminUsername)
+        public static DataTable GetProductsForSale(string adminUsername)
         {
+            if (string.IsNullOrWhiteSpace(adminUsername))
+            {
+                throw new ArgumentException("Имя пользователя администратора не может быть пустым.");
+            }
+
             string query = @"
-        SELECT 
-            ProductID, 
-            Name, 
-            Brand,
-            Categories.CategoryName, 
-            Price,
-            Quantity,
-            Size,
-            Composition,
-            ShelfLife,
-            DeliveryTime,
-            MinStockLevel
-        FROM 
-            Products
-        INNER JOIN 
-            Categories ON Products.CategoryID = Categories.CategoryID
-        WHERE 
-            Products.CreatedBy = @CreatedBy";
+SELECT 
+    Products.ProductID,
+    Products.Name, 
+    Categories.CategoryName, 
+    Products.Brand, 
+    Products.Price, 
+    Products.Quantity,
+    ISNULL(SUM(TransactionDetails.Quantity), 0) AS TotalSoldQuantity
+FROM 
+    Products
+INNER JOIN 
+    Categories ON Products.CategoryID = Categories.CategoryID
+LEFT JOIN 
+    TransactionDetails ON Products.ProductID = TransactionDetails.ProductID
+WHERE 
+    Products.CreatedBy = @CreatedBy
+GROUP BY 
+    Products.ProductID,
+    Products.Name, 
+    Categories.CategoryName, 
+    Products.Brand, 
+    Products.Price, 
+    Products.Quantity
+ORDER BY 
+    TotalSoldQuantity DESC";
+
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
@@ -909,66 +1002,42 @@ WHERE
             });
         }
 
-        public static void ApplyPromotions(DataTable productsTable)
+
+        [Obsolete]
+        public static DataTable GetProducts(string adminUsername)
         {
-            try
+            if (string.IsNullOrWhiteSpace(adminUsername))
             {
-                string promotionsQuery = @"
-            SELECT 
-                p.PromotionID,
-                p.DiscountPercentage,
-                pr.TargetType,
-                pr.TargetValue
-            FROM 
-                Promotions p
-            JOIN 
-                PromotionRules pr ON p.PromotionID = pr.PromotionID
-            WHERE 
-                GETDATE() BETWEEN p.StartDate AND p.EndDate";
-
-                var promotions = DatabaseHelper.ExecuteQuery(promotionsQuery, command => { });
-
-                foreach (DataRow promotionRow in promotions.Rows)
-                {
-                    decimal discountPercentage = Convert.ToDecimal(promotionRow["DiscountPercentage"]);
-                    string targetType = promotionRow["TargetType"].ToString();
-                    string targetValue = promotionRow["TargetValue"].ToString();
-
-                    foreach (DataRow productRow in productsTable.Rows)
-                    {
-                        bool applyDiscount = false;
-
-                        switch (targetType)
-                        {
-                            case "Product":
-                                if (productRow["Name"].ToString() == targetValue)
-                                    applyDiscount = true;
-                                break;
-                            case "Brand":
-                                if (productRow["Brand"].ToString() == targetValue)
-                                    applyDiscount = true;
-                                break;
-                            case "Category":
-                                if (productRow["CategoryName"].ToString() == targetValue)
-                                    applyDiscount = true;
-                                break;
-                        }
-
-                        if (applyDiscount)
-                        {
-                            decimal originalPrice = Convert.ToDecimal(productRow["Price"]);
-                            decimal discountedPrice = originalPrice * (1 - discountPercentage / 100);
-                            productRow["Price"] = Math.Round(discountedPrice, 2);
-                        }
-                    }
-                }
+                throw new ArgumentException("Имя пользователя администратора не может быть пустым.");
             }
-            catch (Exception ex)
+
+            string query = @"
+SELECT 
+    ProductID, 
+    Name, 
+    Brand,
+    Categories.CategoryName, 
+    Price,
+    Quantity,
+    Size,
+    Composition,
+    ShelfLife,
+    DeliveryTime,
+    MinStockLevel
+FROM 
+    Products
+INNER JOIN 
+    Categories ON Products.CategoryID = Categories.CategoryID
+WHERE 
+    Products.CreatedBy = @CreatedBy
+ORDER BY 
+    ProductID DESC";
+
+            return DatabaseHelper.ExecuteQuery(query, command =>
             {
-                throw new Exception($"Ошибка при применении акций: {ex.Message}");
-            }
+                command.Parameters.AddWithValue("@CreatedBy", adminUsername);
+            });
         }
-
 
 
         [Obsolete]
@@ -1092,36 +1161,141 @@ WHERE
         public static DataTable GetSaleDetails(int saleId)
         {
             string query = @"
-        SELECT 
-            ProductName,
-            Quantity,
-            Price,
-            0 AS ReturnQuantity
-        FROM SaleDetails
-        WHERE SaleID = @SaleID";
+SELECT 
+    td.ProductID,
+    p.Name AS ProductName,
+    td.Quantity,
+    p.Price
+FROM 
+    TransactionDetails td
+INNER JOIN 
+    Products p ON td.ProductID = p.ProductID
+WHERE 
+    td.TransactionID = @TransactionID";
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
-                command.Parameters.AddWithValue("@SaleID", saleId);
+                command.Parameters.AddWithValue("@TransactionID", saleId);
             });
         }
 
         [Obsolete]
-        public static void AddReturn(int saleId, string productName, int quantity, string adminUsername)
+        public static void AddReturn(int transactionId, string productName, int quantity, string adminUsername)
         {
             string query = @"
-        INSERT INTO Returns (SaleID, ProductName, ReturnedQuantity, ReturnTime, AdminUsername) 
-        VALUES (@SaleID, @ProductName, @ReturnedQuantity, @ReturnTime, @AdminUsername)";
+    INSERT INTO Returns (TransactionID, ProductName, ReturnedQuantity, ReturnTime, AdminUsername) 
+    VALUES (@TransactionID, @ProductName, @ReturnedQuantity, @ReturnTime, @AdminUsername)";
 
             DatabaseHelper.ExecuteNonQuery(query, command =>
             {
-                command.Parameters.AddWithValue("@SaleID", saleId);
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
                 command.Parameters.AddWithValue("@ProductName", productName);
                 command.Parameters.AddWithValue("@ReturnedQuantity", quantity);
                 command.Parameters.AddWithValue("@ReturnTime", DateTime.Now);
                 command.Parameters.AddWithValue("@AdminUsername", adminUsername);
             });
         }
+
+
+        private static void UpdateCashAmount(int returnQuantity, string productName, string adminUsername)
+        {
+            decimal productPrice = GetProductPrice(productName);
+
+            decimal refundAmount = productPrice * returnQuantity;
+
+            Queries.UpdateCashAmount(-refundAmount, "Возврат", adminUsername);
+        }
+
+        public static void UpdateTransactionTotal(int transactionId)
+        {
+            string query = @"
+UPDATE Transactions
+SET Total = (
+    SELECT SUM(Quantity * Price)
+    FROM TransactionDetails
+    WHERE TransactionID = @TransactionID
+)
+WHERE TransactionID = @TransactionID";
+
+            DatabaseHelper.ExecuteNonQuery(query, command =>
+            {
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
+            });
+        }
+
+
+        private static decimal GetProductPrice(string productName)
+        {
+            string query = @"
+SELECT Price 
+FROM Products 
+WHERE Name = @ProductName";
+
+            return Convert.ToDecimal(DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@ProductName", productName);
+            }));
+        }
+
+        private static bool TransactionExists(int transactionId)
+        {
+            string query = @"
+SELECT COUNT(*) 
+FROM Transactions 
+WHERE TransactionID = @TransactionID";
+
+            return Convert.ToInt32(DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
+            })) > 0;
+        }
+
+        public static void ReturnProduct(string productName, int returnQuantity, int transactionId)
+        {
+            // Получаем ProductID
+            int productId = GetProductIdByName(productName);
+            if (productId == -1)
+            {
+                throw new Exception($"Товар с именем {productName} не найден.");
+            }
+
+            string updateProductQuery = @"
+UPDATE Products 
+SET Quantity = Quantity + @ReturnQuantity 
+WHERE ProductID = @ProductID";
+
+            DatabaseHelper.ExecuteNonQuery(updateProductQuery, command =>
+            {
+                command.Parameters.AddWithValue("@ReturnQuantity", returnQuantity);
+                command.Parameters.AddWithValue("@ProductID", productId);
+            });
+
+            string updateTransactionDetailsQuery = @"
+UPDATE TransactionDetails 
+SET Quantity = Quantity - @ReturnQuantity 
+WHERE TransactionID = @TransactionID AND ProductID = @ProductID";
+
+            DatabaseHelper.ExecuteNonQuery(updateTransactionDetailsQuery, command =>
+            {
+                command.Parameters.AddWithValue("@ReturnQuantity", returnQuantity);
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
+                command.Parameters.AddWithValue("@ProductID", productId);
+            });
+
+            UpdateTransactionTotal(transactionId);
+        }
+
+        private static int GetProductIdByName(string productName)
+        {
+            string query = "SELECT ProductID FROM Products WHERE Name = @ProductName";
+            object result = DatabaseHelper.ExecuteScalar(query, cmd =>
+            {
+                cmd.Parameters.AddWithValue("@ProductName", productName);
+            });
+
+            return result != null ? Convert.ToInt32(result) : -1;
+        }
+
 
         [Obsolete]
         public static DataTable GetSalesHistory(string adminUsername)
@@ -1155,33 +1329,6 @@ WHERE
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
                 command.Parameters.AddWithValue("@UserUsername", adminUsername);
-            });
-        }
-
-        [Obsolete]
-        public static void ReturnProduct(string productName, int returnQuantity, int saleId)
-        {
-            string updateProductQuery = @"
-        UPDATE Products 
-        SET Quantity = Quantity + @ReturnQuantity 
-        WHERE Name = @ProductName";
-
-            DatabaseHelper.ExecuteNonQuery(updateProductQuery, command =>
-            {
-                command.Parameters.AddWithValue("@ReturnQuantity", returnQuantity);
-                command.Parameters.AddWithValue("@ProductName", productName);
-            });
-
-            string updateSaleDetailsQuery = @"
-        UPDATE SaleDetails 
-        SET Quantity = Quantity - @ReturnQuantity 
-        WHERE SaleID = @SaleID AND ProductName = @ProductName";
-
-            DatabaseHelper.ExecuteNonQuery(updateSaleDetailsQuery, command =>
-            {
-                command.Parameters.AddWithValue("@ReturnQuantity", returnQuantity);
-                command.Parameters.AddWithValue("@SaleID", saleId);
-                command.Parameters.AddWithValue("@ProductName", productName);
             });
         }
 
@@ -1521,19 +1668,19 @@ WHERE
             });
         }
 
-        [Obsolete]
-        public static void DeleteProduct(string productName, string adminUsername)
-        { 
+        public static void DeleteProduct(int productId, string adminUsername)
+        {
             string deleteQuery = @"
-            DELETE FROM Products 
-            WHERE ProductID = @ProductID AND CreatedBy = @CreatedBy";
+    DELETE FROM Products 
+    WHERE ProductID = @ProductID AND CreatedBy = @CreatedBy";
 
             DatabaseHelper.ExecuteNonQuery(deleteQuery, command =>
             {
-                command.Parameters.AddWithValue("@Name", productName);
+                command.Parameters.AddWithValue("@ProductID", productId);
                 command.Parameters.AddWithValue("@CreatedBy", adminUsername);
             });
         }
+
 
         [Obsolete]
         public static void AddCategory(string categoryName, string createdBy)

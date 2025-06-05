@@ -1,0 +1,129 @@
+﻿<Window x:Class="Diploma.main_windows.OrderConfirmationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Оформление заказа" Height="700" Width="900"
+        Background="#FF2D2D30" Foreground="White"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Информация о клиенте -->
+            <RowDefinition Height="Auto"/>
+            <!-- Отображение уровня лояльности -->
+            <RowDefinition Height="*"/>
+            <!-- Таблица товаров -->
+            <RowDefinition Height="Auto"/>
+            <!-- Итог и акции -->
+            <RowDefinition Height="Auto"/>
+            <!-- Кнопка -->
+        </Grid.RowDefinitions>
+
+        <!-- Информация о клиенте -->
+        <Border Grid.Row="0" Background="#FF3C3C3C" CornerRadius="10" Padding="20" Margin="0,0,0,10">
+            <StackPanel>
+                <TextBlock Text="Информация о клиенте" FontWeight="Bold" FontSize="18" Margin="0,0,0,10"/>
+                <UniformGrid Columns="2" Rows="3" Margin="0,0,0,5">
+                    <TextBlock Text="ФИО:" FontWeight="Bold" FontSize="14"/>
+                    <TextBlock Text="{Binding ClientName}" FontSize="14"/>
+                    <TextBlock Text="Контактный номер:" FontWeight="Bold" FontSize="14"/>
+                    <TextBlock Text="{Binding ContactInfo}" FontSize="14"/>
+                    <TextBlock Text="Email:" FontWeight="Bold" FontSize="14"/>
+                    <TextBlock Text="{Binding Email}" FontSize="14"/>
+                </UniformGrid>
+            </StackPanel>
+        </Border>
+
+        <!-- Блок уровня лояльности -->
+        <Border Grid.Row="1" Background="#FF3C3C3C" CornerRadius="10" Padding="15" Margin="0,0,0,15">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" >
+                <TextBlock Text="Уровень лояльности клиента:" FontWeight="Bold" FontSize="16" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding LoyaltyLevel}" FontSize="16" FontWeight="SemiBold" Margin="10,0,20,0" VerticalAlignment="Center" Foreground="#FF00FF7F"/>
+                <TextBlock Text="Персональная скидка:" FontWeight="Bold" FontSize="16" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding LoyaltyDiscount, StringFormat={}{0:F2}%}" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="#FF00FF7F"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Таблица товаров -->
+        <DataGrid x:Name="OrderProductsDataGrid" Grid.Row="2" AutoGenerateColumns="False"
+                  Background="#FF1E1E1E" Foreground="White" BorderThickness="0"
+                  Margin="0,0,0,15" CanUserAddRows="False" CanUserDeleteRows="False"
+                  HeadersVisibility="Column" IsReadOnly="True" RowHeight="35" FontSize="14"
+                  GridLinesVisibility="None">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Наименование" Binding="{Binding Name}" Width="2*"/>
+                <DataGridTextColumn Header="Бренд" Binding="{Binding Brand}" Width="*"/>
+                <DataGridTextColumn Header="Количество" Binding="{Binding OrderQuantity}" Width="*"/>
+                <DataGridTextColumn Header="Цена (byn)" Binding="{Binding Price, StringFormat=N2}" Width="*"/>
+                <DataGridTextColumn Header="Сумма (byn)" Binding="{Binding Total, StringFormat=N2}" Width="*"/>
+            </DataGrid.Columns>
+
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="#FF4D4D4D"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="FontSize" Value="14"/>
+                    <Setter Property="Padding" Value="3,4"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="Background" Value="#FF2D2D2D"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="FontSize" Value="14"/>
+                    <Setter Property="Margin" Value="3,0,0,0"/>
+                </Style>
+            </DataGrid.RowStyle>
+        </DataGrid>
+
+        <!-- Итог и описание акций -->
+        <Border Grid.Row="3" Background="#FF3C3C3C" CornerRadius="10" Padding="20" Margin="0,0,0,15">
+            <StackPanel>
+                <TextBlock Text="Итоговая сумма заказа:" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                <TextBlock x:Name="TotalAmountTextBlock" FontSize="16" FontWeight="SemiBold" Foreground="#FF00FF7F"/>
+
+                <TextBlock Text="Описание применённых акций:" FontWeight="Bold" FontSize="16" Margin="0,15,0,8"/>
+                <TextBlock x:Name="PromotionsDescriptionTextBlock"
+                           FontSize="14" TextWrapping="Wrap"
+                           Background="#FF2A2A2A" Padding="10"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="Подтвердить заказ"
+                    Width="220" Height="50"
+                    Background="#FF00A651" Foreground="White" FontSize="16"
+                    Cursor="Hand" BorderThickness="0" BorderBrush="Transparent"
+                    Margin="0,0,0,10"
+                    Click="ConfirmOrder_Click">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            CornerRadius="10"
+                                            Padding="10">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Setter Property="Effect">
+                            <Setter.Value>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="0" Color="Black" Opacity="0.4"/>
+                            </Setter.Value>
+                        </Setter>
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="SnapsToDevicePixels" Value="True"/>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>

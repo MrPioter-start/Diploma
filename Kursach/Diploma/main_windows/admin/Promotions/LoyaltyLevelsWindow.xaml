@@ -1,0 +1,137 @@
+﻿<Window x:Class="Diploma.main_windows.admin.Promotions.LoyaltyLevelsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Diploma.main_windows.admin.Promotions"
+        mc:Ignorable="d"
+        Title="Уровни лояльности" Height="666" Width="800"
+        Background="#FF2D2D30" Foreground="White"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <Style x:Key="RoundedButton" TargetType="Button">
+            <Setter Property="Background" Value="#FF00A651"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="YellowButton" TargetType="Button" BasedOn="{StaticResource RoundedButton}">
+            <Setter Property="Background" Value="#FFD4AF37"/>
+            <Setter Property="Foreground" Value="Black"/>
+        </Style>
+        <Style x:Key="RedButton" TargetType="Button" BasedOn="{StaticResource RoundedButton}">
+            <Setter Property="Background" Value="#FFB00020"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="#FF3C3C3C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RowBackground" Value="#FF3C3C3C"/>
+            <Setter Property="AlternatingRowBackground" Value="#FF323232"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="#FF3C3C3C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FF505050"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#FF00A651"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#FF4D4D4D"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#FF555555"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#FF4D4D4D" Margin="25" Padding="10" CornerRadius="8">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Добавить уровень" Click="AddLevel_Click" Style="{StaticResource RoundedButton}"/>
+                <Button Content="Редактировать" Click="EditLevel_Click" Style="{StaticResource YellowButton}"/>
+                <Button Content="Удалить" Click="DeleteLevel_Click" Style="{StaticResource RedButton}"/>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Margin="20,10,20,10" Background="#FF3C3C3C" CornerRadius="8" Padding="5">
+            <DataGrid x:Name="LoyaltyLevelsDataGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                      HeadersVisibility="Column" RowHeight="35" SelectionMode="Single" BorderThickness="0"
+                      Background="Transparent" Foreground="White" GridLinesVisibility="None">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Название уровня" Binding="{Binding LevelName}" Width="*" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Порог (byn)" Binding="{Binding MinOrderAmount}" Width="140" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Скидка (%)" Binding="{Binding DiscountPercentage}" Width="140" IsReadOnly="True"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <Border Grid.Row="2" Background="#FF4D4D4D" Margin="20" Padding="15" CornerRadius="8" Visibility="Collapsed" x:Name="LevelForm">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Button Content="✖" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="16"
+                        Foreground="White" Background="Transparent" BorderBrush="Transparent" Cursor="Hand"
+                        Click="CloseLevelForm_Click" ToolTip="Закрыть" Width="30" Height="30"/>
+
+                <StackPanel Orientation="Vertical" Grid.Row="1" Margin="0,10,0,0">
+                    <TextBlock Text="Название уровня:" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="LevelNameTextBox" Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Минимальная сумма заказов (byn):" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="MinOrderTotalTextBox" Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Скидка (%):" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="DiscountPercentageTextBox" Margin="0,0,0,10"/>
+
+                    <Button x:Name="SaveLevelButton" Content="Сохранить" Click="SaveLevelButton_Click"
+                            Style="{StaticResource RoundedButton}" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -24,7 +24,21 @@
                  BorderBrush="#FF555555" BorderThickness="1" Padding="5" Height="30" 
                  Width="200" FontSize="14" TextChanged="SearchTextBox_TextChanged"/>
 
-                
+                <TextBlock Text="Фильтр:" Foreground="White" VerticalAlignment="Center" Margin="10,0,5,0"/>
+                <ComboBox x:Name="FilterComboBox" Width="200" Height="30" SelectionChanged="FilterComboBox_SelectionChanged" Margin="10">
+                    <ComboBox.Style>
+                        <Style TargetType="ComboBox">
+                            <Setter Property="Background" Value="#FF4D4D4D"/>
+                            <Setter Property="Foreground" Value="Black"/>
+                            <Setter Property="FontSize" Value="14"/>
+                            <Setter Property="Padding" Value="5"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                        </Style>
+                    </ComboBox.Style>
+                    <ComboBoxItem Content="Все товары" IsSelected="True"/>
+                    <ComboBoxItem Content="Часто продаваемые"/>
+                </ComboBox>
             </StackPanel>
         </DockPanel>
 
@@ -52,11 +66,12 @@
           BorderThickness="0" GridLinesVisibility="None"
           Margin="20,0,20,20" CanUserAddRows="False" Grid.Row="1">
             <DataGrid.Columns>
+                <DataGridTextColumn Header="Название" Binding="{Binding ProductID}" Width="*" IsReadOnly="True" Visibility="Hidden"/>
                 <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="*" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Категория" Binding="{Binding CategoryName}" Width="*" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Бренд" Binding="{Binding Brand}" Width="*" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Цена" Binding="{Binding Price}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Наличие" Binding="{Binding Quantity}" Width="*" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Наличие" Binding="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*" IsReadOnly="True"/>
                 <DataGridTemplateColumn Header="Количество" Width="150">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

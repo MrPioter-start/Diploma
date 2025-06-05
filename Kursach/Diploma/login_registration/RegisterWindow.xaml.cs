@@ -54,9 +54,6 @@ namespace Kursach.login_registration
                     case "Менеджер":
                         roleID = 2;
                         break;
-                    case "Пользователь":
-                        roleID = 3;
-                        break;
                 }
             }
 
@@ -93,7 +90,7 @@ namespace Kursach.login_registration
             {
                 selectedRole = selectedItem.Content.ToString();
 
-                bool showCodeInput = selectedRole == "Менеджер" || selectedRole == "Пользователь";
+                bool showCodeInput = selectedRole == "Менеджер";
                 CodeLabel.Visibility = showCodeInput ? Visibility.Visible : Visibility.Collapsed;
                 AccessCodeTextBox.Visibility = showCodeInput ? Visibility.Visible : Visibility.Collapsed;
             }
