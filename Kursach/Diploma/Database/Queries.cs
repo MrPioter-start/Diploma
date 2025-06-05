@@ -14,7 +14,7 @@ namespace Kursach.Database
     string adminUsername,
     int? customerID = null,
     string status = null,
-    string type = "Продажа")
+    string type = "Локальная покупка")
         {
             string transactionQuery = @"
         INSERT INTO Transactions (Type, CustomerID, Status, CreatedBy, Total)
@@ -201,7 +201,7 @@ SELECT
     t.TransactionID,
     t.Type,
     CASE 
-        WHEN c.CustomerID IS NULL THEN 'None' -- Если клиент отсутствует
+        WHEN c.CustomerID IS NULL THEN 'Локально' -- Если клиент отсутствует
         ELSE c.Name -- Имя клиента
     END AS CustomerName,
     CASE 
@@ -383,6 +383,17 @@ ORDER BY
             {
                 command.Parameters.AddWithValue("@Email", customerEmail);
             }) is decimal totalOrders ? totalOrders : 0;
+        }
+
+        public static decimal GetTransactionTotal(int transactionId)
+        {
+            string query = "SELECT Total FROM Transactions WHERE TransactionID = @TransactionID";
+            object result = DatabaseHelper.ExecuteScalar(query, command =>
+            {
+                command.Parameters.AddWithValue("@TransactionID", transactionId);
+            });
+
+            return result != null && result != DBNull.Value ? Convert.ToDecimal(result) : 0;
         }
 
         public static void UpdateOrderStatus(int transactionId, string newStatus)
@@ -618,7 +629,8 @@ ORDER BY
             c.Email,
             c.ContactInfo,
             t.Total AS TotalAmount,
-            t.Status
+            t.Status,
+            t.TransactionTime
         FROM 
             Transactions t
         LEFT JOIN 
@@ -744,22 +756,23 @@ WHERE
         public static DataTable GetSalesReport(DateTime startDate, DateTime endDate, string adminUsername)
         {
             string query = @"
-    SELECT 
-        t.Total AS 'Сумма продажи',
-        t.TransactionTime AS 'Время продажи',
-        CONCAT(p.Name, ' ', p.Brand) AS 'Наименование товара',
-        td.Quantity AS 'Количество',
-        td.Price AS 'Цена за единицу'
-    FROM 
-        Transactions t
-    LEFT JOIN 
-        TransactionDetails td ON t.TransactionID = td.TransactionID
-    LEFT JOIN 
-        Products p ON td.ProductID = p.ProductID
-    WHERE 
-        t.Type = 'Продажа' AND 
-        t.CreatedBy = @AdminUsername AND 
-        t.TransactionTime BETWEEN @StartDate AND @EndDate";
+SELECT 
+    t.Total AS 'Сумма продажи',
+    t.TransactionTime AS 'Время продажи',
+    CONCAT(p.Name, ' ', p.Brand) AS 'Наименование товара',
+    td.Quantity AS 'Количество',
+    td.Price AS 'Цена за единицу'
+FROM 
+    Transactions t
+LEFT JOIN 
+    TransactionDetails td ON t.TransactionID = td.TransactionID
+LEFT JOIN 
+    Products p ON td.ProductID = p.ProductID
+WHERE 
+    (t.Type = 'Локальная покупка' OR t.Type = 'Заказ') AND
+    t.CreatedBy = @AdminUsername AND 
+    t.TransactionTime BETWEEN @StartDate AND @EndDate";
+
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
@@ -820,25 +833,27 @@ WHERE
         public static DataTable GetPopularProductsReport(DateTime startDate, DateTime endDate, string adminUsername)
         {
             string query = @"
-    SELECT 
-        p.Name AS 'Название',
-        p.Brand AS 'Бренд',
-        SUM(td.Quantity) AS 'Всего продано'
-    FROM 
-        TransactionDetails td
-    INNER JOIN 
-        Transactions t ON td.TransactionID = t.TransactionID
-    INNER JOIN 
-        Products p ON td.ProductID = p.ProductID
-    WHERE 
-        t.Type = 'Продажа' AND 
-        t.CreatedBy = @AdminUsername AND 
-        t.TransactionTime BETWEEN @StartDate AND @EndDate 
-    GROUP BY 
-        p.Name,
-        p.Brand
-    ORDER BY 
-        SUM(td.Quantity) DESC";
+SELECT 
+    p.Name AS 'Название',
+    p.Brand AS 'Бренд',
+    SUM(td.Quantity) AS 'Всего продано'
+FROM 
+    TransactionDetails td
+INNER JOIN 
+    Transactions t ON td.TransactionID = t.TransactionID
+INNER JOIN 
+    Products p ON td.ProductID = p.ProductID
+WHERE 
+    t.Type = 'Локальная покупка' AND 
+    t.CreatedBy = @AdminUsername AND 
+    t.TransactionTime BETWEEN @StartDate AND @EndDate 
+GROUP BY 
+    p.Name,
+    p.Brand
+HAVING 
+    SUM(td.Quantity) > 0
+ORDER BY 
+    SUM(td.Quantity) DESC";
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
@@ -847,6 +862,7 @@ WHERE
                 command.Parameters.AddWithValue("@EndDate", endDate);
             });
         }
+
 
         public static DataTable GetCustomerLoyaltyInfo(int customerId)
         {
@@ -996,30 +1012,33 @@ ORDER BY
             }
 
             string query = @"
-    SELECT 
-        ProductID, 
-        Name, 
-        Brand,
-        Categories.CategoryName, 
-        Price,
-        Quantity,
-        Size,
-        Composition,
-        ShelfLife,
-        DeliveryTime,
-        MinStockLevel
-    FROM 
-        Products
-    INNER JOIN 
-        Categories ON Products.CategoryID = Categories.CategoryID
-    WHERE 
-        Products.CreatedBy = @CreatedBy";
+SELECT 
+    ProductID, 
+    Name, 
+    Brand,
+    Categories.CategoryName, 
+    Price,
+    Quantity,
+    Size,
+    Composition,
+    ShelfLife,
+    DeliveryTime,
+    MinStockLevel
+FROM 
+    Products
+INNER JOIN 
+    Categories ON Products.CategoryID = Categories.CategoryID
+WHERE 
+    Products.CreatedBy = @CreatedBy
+ORDER BY 
+    ProductID DESC";
 
             return DatabaseHelper.ExecuteQuery(query, command =>
             {
                 command.Parameters.AddWithValue("@CreatedBy", adminUsername);
             });
         }
+
 
         [Obsolete]
         public static void UpdateProduct(string originalName, string newName, int categoryID, decimal price, int quantity,

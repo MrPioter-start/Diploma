@@ -118,6 +118,14 @@ namespace Kursach.main_windows.admin
 
                 this.DialogResult = true;
 
+                Queries.UpdateTransactionTotal(saleId);
+                decimal updatedTotal = Queries.GetTransactionTotal(saleId);
+
+                if (updatedTotal == 0)
+                {
+                    Queries.UpdateOrderStatus(saleId, "Возвращен");
+                }
+
                 this.Close();
             }
             catch (Exception ex)

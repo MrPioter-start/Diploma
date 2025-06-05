@@ -21,6 +21,13 @@ namespace Diploma.main_windows.admin
             _transactionDetails = transactionDetails;
 
             TransactionDetailsDataGrid.ItemsSource = transactionDetails.DefaultView;
+
+            string status = Queries.GetTransactionStatus(transactionId);
+            if (status == "Возвращен")
+            {
+                ReturnButton.IsEnabled = false;
+                ReturnButton.ToolTip = "Возврат невозможен — все товары уже возвращены.";
+            }
         }
 
         private void ReturnButton_Click(object sender, RoutedEventArgs e)

@@ -7,6 +7,8 @@ using System.Net;
 using System.Net.Mail;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Media;
 
 namespace Diploma.main_windows
 {
@@ -32,8 +34,68 @@ namespace Diploma.main_windows
         {
             var orders = Queries.GetOrdersByAdmin(adminUsername);
             OrdersDataGrid.ItemsSource = orders.DefaultView;
+
+            OrdersDataGrid.AutoGeneratingColumn += (s, e) =>
+            {
+                if (e.PropertyName == "TransactionTime")
+                {
+                    if (e.Column is DataGridTextColumn textColumn)
+                    {
+                        (textColumn.Binding as Binding).StringFormat = "dd.MM.yyyy";
+                    }
+                }
+            };
+
+            OrdersDataGrid.LoadingRow += (s, e) =>
+            {
+                if (e.Row.Item is DataRowView row)
+                {
+                    string status = row["Status"]?.ToString();
+                    e.Row.Foreground = new SolidColorBrush(Colors.Black); // текст всегда чёрный
+
+                    if (status == "Завершен" || status == "Отменен")
+                    {
+                        e.Row.Opacity = 0.5;
+                        e.Row.Background = new SolidColorBrush(Colors.Transparent); // без цвета
+                        return;
+                    }
+
+                    // Все остальные статусы
+                    e.Row.Opacity = 1;
+
+                    if (DateTime.TryParse(row["TransactionTime"]?.ToString(), out DateTime transactionTime))
+                    {
+                        TimeSpan age = DateTime.Now - transactionTime;
+
+                        if (age.TotalDays <= 3)
+                        {
+                            e.Row.Background = new SolidColorBrush(Color.FromRgb(180, 255, 180)); // салатовый
+                        }
+                        else if (age.TotalDays <= 5)
+                        {
+                            e.Row.Background = new SolidColorBrush(Color.FromRgb(255, 220, 180)); // блекло-оранжевый
+                        }
+                        else if (age.TotalDays <= 7)
+                        {
+                            e.Row.Background = new SolidColorBrush(Color.FromRgb(255, 200, 200)); // блекло-красный
+                        }
+                        else
+                        {
+                            e.Row.Background = new SolidColorBrush(Colors.Transparent); // позже 7 дней — без фона
+                        }
+                    }
+                    else
+                    {
+                        e.Row.Background = new SolidColorBrush(Colors.Transparent); // если нет даты
+                    }
+                }
+            };
+
             isLoading = false;
         }
+
+
+
 
         private void StatusComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -100,6 +162,7 @@ namespace Diploma.main_windows
                             MessageBox.Show("Оплата подтверждена! Заказ завершён.", "Успех");
 
                             SendStatusEmail(customerEmail, orderId.ToString(), "Завершен", totalAmount, customerName);
+                            LoadOrders();
                         }
                         else
                         {
@@ -107,6 +170,7 @@ namespace Diploma.main_windows
                             row["Status"] = "Собран";
                             comboBox.SelectedItem = "Собран";
                             MessageBox.Show("Оплата отменена. Заказ возвращён в статус 'Собран'.", "Информация");
+                            LoadOrders();
                         }
                         isUpdatingComboBox = false;
                         return;

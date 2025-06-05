@@ -72,7 +72,7 @@
 
         <!-- Кнопка возврата -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,20,10" Grid.Row="2">
-            <Button Content="Возврат" Click="ReturnButton_Click" 
+            <Button x:Name="ReturnButton" Content="Возврат" Click="ReturnButton_Click" 
                     Background="#FFD4AF37" Foreground="White" 
                     Height="40" Width="150" Padding="10,5" Cursor="Hand" 
                     BorderThickness="0" FontWeight="Bold" FontSize="14"/>

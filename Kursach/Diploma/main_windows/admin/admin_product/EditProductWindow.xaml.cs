@@ -58,8 +58,6 @@ namespace Kursach.main_windows.admin
             string newName = NameTextBox.Text.Trim();
             string newSize = SizeTextBox.Text.Trim();
             string newComposition = CompositionTextBox.Text.Trim();
-            string newShelfLife = ShelfLifeTextBox.Text.Trim();
-            string newDeliveryTime = DeliveryTimeTextBox.Text.Trim();
             string newBrand = BrandTextBox.Text.Trim();
 
             if (CategoryComboBox.SelectedValue == null)
@@ -106,15 +104,15 @@ namespace Kursach.main_windows.admin
                 return;
             }
 
-            if (string.IsNullOrEmpty(newShelfLife))
+            if (!int.TryParse(ShelfLifeTextBox.Text, out int shelfLifeValue) || shelfLifeValue < 0)
             {
-                MessageBox.Show("Введите срок годности товара.", "Ошибка");
+                MessageBox.Show("Введите корректный срок годности (неотрицательное число).", "Ошибка");
                 return;
             }
 
-            if (string.IsNullOrEmpty(newDeliveryTime))
+            if (!int.TryParse(DeliveryTimeTextBox.Text, out int deliveryTimeValue) || deliveryTimeValue < 0)
             {
-                MessageBox.Show("Введите время доставки товара.", "Ошибка");
+                MessageBox.Show("Введите корректное время доставки (неотрицательное число).", "Ошибка");
                 return;
             }
 
@@ -134,8 +132,8 @@ namespace Kursach.main_windows.admin
                     quantity: newQuantity,
                     size: newSize,
                     composition: newComposition,
-                    shelfLife: newShelfLife,
-                    deliveryTime: newDeliveryTime,
+                    shelfLife: shelfLifeValue.ToString(),
+                    deliveryTime: deliveryTimeValue.ToString(),
                     createdBy: createdBy,
                     minStockLevel: newMinStockLevel,
                     brand: newBrand
@@ -149,5 +147,6 @@ namespace Kursach.main_windows.admin
                 MessageBox.Show($"Ошибка при обновлении товара: {ex.Message}", "Ошибка");
             }
         }
+
     }
 }

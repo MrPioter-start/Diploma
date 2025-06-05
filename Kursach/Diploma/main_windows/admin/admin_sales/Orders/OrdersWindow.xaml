@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Diploma.main_windows"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
-        Title="Заказы" Height="600" Width="1000"
+        Title="Заказы" Height="600" Width="1200"
         Background="#FF2D2D30" Foreground="White"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
@@ -28,19 +28,29 @@
 
         <DataGrid x:Name="OrdersDataGrid" Grid.Row="1" AutoGenerateColumns="False" 
                   Background="#FF3C3C3C" Foreground="White" BorderThickness="0" 
-                  HeadersVisibility="Column" Margin="20,10" CanUserAddRows="False" CanUserDeleteRows="False">
+                  HeadersVisibility="Column" Margin="20,10" CanUserAddRows="False" 
+                  CanUserDeleteRows="False" ColumnWidth="*" 
+                  HorizontalScrollBarVisibility="Auto">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Клиент" Binding="{Binding ClientName}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Контактная информация" Binding="{Binding ContactInfo}" Width="*" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Сумма" Binding="{Binding TotalAmount}" Width="*" IsReadOnly="True"/>
-                <DataGridTemplateColumn Header="Статус" Width="*">
+                <DataGridTextColumn Header="Клиент" Binding="{Binding ClientName}" Width="2*" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="2.5*" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Контакты" Binding="{Binding ContactInfo}" Width="2.5*" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Дата"
+                    Binding="{Binding TransactionTime, StringFormat=dd.MM.yyyy}" />
+
+                <DataGridTextColumn Header="Сумма" Binding="{Binding TotalAmount}" Width="1.5*" IsReadOnly="True"/>
+                <DataGridTemplateColumn Header="Статус" Width="2*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <ComboBox 
-    ItemsSource="{StaticResource OrderStatuses}" 
-    SelectionChanged="StatusComboBox_SelectionChanged"
-    Loaded="StatusComboBox_Loaded" />
+                            <ComboBox ItemsSource="{StaticResource OrderStatuses}" 
+                                      SelectionChanged="StatusComboBox_SelectionChanged"
+                                      Loaded="StatusComboBox_Loaded"
+                                      Background="#FF4D4D4D"
+                                      Foreground="Black"
+                                      BorderThickness="0"
+                                      FontSize="13"
+                                      Padding="4,2"
+                                      HorizontalContentAlignment="Center"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -52,8 +62,17 @@
                     <Setter Property="Foreground" Value="White"/>
                     <Setter Property="FontSize" Value="14"/>
                     <Setter Property="BorderThickness" Value="0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Status}" Value="Завершен">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Status}" Value="Отменен">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </DataTrigger>
+                    </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
+
 
             <DataGrid.ColumnHeaderStyle>
                 <Style TargetType="DataGridColumnHeader">
@@ -61,7 +80,7 @@
                     <Setter Property="Foreground" Value="White"/>
                     <Setter Property="FontWeight" Value="Bold"/>
                     <Setter Property="FontSize" Value="14"/>
-                    <Setter Property="Padding" Value="10"/>
+                    <Setter Property="Padding" Value="10,4"/>
                     <Setter Property="BorderThickness" Value="0"/>
                 </Style>
             </DataGrid.ColumnHeaderStyle>

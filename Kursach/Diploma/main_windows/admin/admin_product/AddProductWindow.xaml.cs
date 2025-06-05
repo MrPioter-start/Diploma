@@ -46,8 +46,6 @@ namespace Kursach.main_windows.admin
             string name = NameTextBox.Text.Trim();
             string size = SizeTextBox.Text.Trim();
             string composition = CompositionTextBox.Text.Trim();
-            string shelfLife = ShelfLifeTextBox.Text.Trim();
-            string deliveryTime = DeliveryTimeTextBox.Text.Trim();
             string brand = BrandTextBox.Text.Trim();
 
             if (string.IsNullOrEmpty(name))
@@ -78,7 +76,7 @@ namespace Kursach.main_windows.admin
 
             if (!int.TryParse(QuantityTextBox.Text, out int quantity) || quantity < 0)
             {
-                MessageBox.Show("Введите корректное количество (неотрицательное целое число).", "Ошибка");
+                MessageBox.Show("Введите корректное количество (неотрицательное число).", "Ошибка");
                 return;
             }
 
@@ -94,15 +92,15 @@ namespace Kursach.main_windows.admin
                 return;
             }
 
-            if (string.IsNullOrEmpty(shelfLife))
+            if (!int.TryParse(ShelfLifeTextBox.Text, out int shelfLifeValue) || shelfLifeValue < 0)
             {
-                MessageBox.Show("Введите срок годности товара.", "Ошибка");
+                MessageBox.Show("Введите корректный срок годности (неотрицательное число).", "Ошибка");
                 return;
             }
 
-            if (string.IsNullOrEmpty(deliveryTime))
+            if (!int.TryParse(DeliveryTimeTextBox.Text, out int deliveryTimeValue) || deliveryTimeValue < 0)
             {
-                MessageBox.Show("Введите время доставки товара.", "Ошибка");
+                MessageBox.Show("Введите корректное время доставки (неотрицательное число).", "Ошибка");
                 return;
             }
 
@@ -121,8 +119,8 @@ namespace Kursach.main_windows.admin
                     quantity: quantity,
                     size: size,
                     composition: composition,
-                    shelfLife: shelfLife,
-                    deliveryTime: deliveryTime,
+                    shelfLife: shelfLifeValue.ToString(),
+                    deliveryTime: deliveryTimeValue.ToString(),
                     createdBy: createdBy,
                     minStockLevel: minStockLevel,
                     brand: brand
@@ -133,12 +131,13 @@ namespace Kursach.main_windows.admin
                 NameTextBox.Clear();
                 PriceTextBox.Clear();
                 QuantityTextBox.Clear();
+                BrandTextBox.Text = "";
                 MinStockLevelTextBox.Clear();
                 SizeTextBox.Clear();
                 CompositionTextBox.Clear();
                 ShelfLifeTextBox.Clear();
                 DeliveryTimeTextBox.Clear();
-                CategoryComboBox.SelectedIndex = -1; 
+                CategoryComboBox.SelectedIndex = -1;
             }
             catch (Exception ex)
             {

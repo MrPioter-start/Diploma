@@ -211,7 +211,7 @@
                 <TextBlock Text="Фильтр по типу:" FontSize="14" VerticalAlignment="Center" Margin="0,0,10,0"/>
                 <ComboBox x:Name="TransactionTypeFilterComboBox" Width="150" SelectionChanged="TransactionTypeFilterComboBox_SelectionChanged">
                     <ComboBoxItem Content="Все" IsSelected="True"/>
-                    <ComboBoxItem Content="Продажа"/>
+                    <ComboBoxItem Content="Локальная покупка"/>
                     <ComboBoxItem Content="Заказ"/>
                 </ComboBox>
             </StackPanel>

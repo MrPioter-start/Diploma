@@ -353,7 +353,7 @@ namespace Kursach.main_windows.admin
 
                     Queries.AddTransaction(formattedProductsList, discountedTotal, adminUsername);
 
-                    Queries.UpdateCashAmount(discountedTotal, "Продажа", adminUsername);
+                    Queries.UpdateCashAmount(discountedTotal, "Локальная покупка", adminUsername);
 
                     MessageBox.Show("Заказ успешно оплачен!", "Успех");
 
@@ -406,7 +406,7 @@ namespace Kursach.main_windows.admin
                     selectedProducts.Columns.Add("OrderQuantity", typeof(int));
                     selectedProducts.Columns.Add("Price", typeof(decimal));
 
-                    var productsTable = Queries.GetProductsBySalesFrequency(adminUsername);
+                    var productsTable = Queries.GetProductsBySalesFrequency(adminUsername); 
 
                     for (int row = 2; row <= worksheet.Dimension.Rows; row++)
                     {
@@ -422,6 +422,18 @@ namespace Kursach.main_windows.admin
 
                         if (prod != null)
                         {
+                            int stockQty = prod.Field<int>("Quantity");
+
+                            if (qty > stockQty)
+                            {
+                                MessageBox.Show(
+                                    $"Недостаточно товара «{productName}» (бренд «{brand}»): запрошено {qty}, в наличии {stockQty}.",
+                                    "Недостаточно товара",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Warning);
+                                continue;
+                            }
+
                             selectedProducts.Rows.Add(
                                 prod.Field<int>("ProductID"),
                                 productName,
@@ -441,11 +453,11 @@ namespace Kursach.main_windows.admin
 
                     if (selectedProducts.Rows.Count == 0)
                     {
-                        MessageBox.Show("Нет ни одного корректного товара для заказа.", "Информация");
+                        MessageBox.Show("Нет ни одного корректного товара для заказа.", "Информация", MessageBoxButton.OK,
+                                MessageBoxImage.Error);
                         return;
                     }
 
-                    // Применяем акции и открываем окно подтверждения
                     ApplyPromotionsToProductsFromExcel(selectedProducts, productsTable);
                     var clientInfo = new { ClientName = clientName, Email = clientEmail, ContactInfo = clientContact };
                     var wnd = new OrderConfirmationWindow(clientInfo, selectedProducts, adminUsername);
@@ -459,21 +471,18 @@ namespace Kursach.main_windows.admin
         }
 
 
+
         private void ApplyPromotionsToProductsFromExcel(DataTable selectedProducts, DataTable productsTable)
         {
-            // Получаем активные акции
             var activePromotions = GetActivePromotions();
 
-            // Создаем словарь ProductID -> CategoryName из productsTable
             var productCategories = productsTable.AsEnumerable()
                 .ToDictionary(row => row.Field<int>("ProductID"),
                               row => row.Field<string>("CategoryName") ?? string.Empty);
 
-            // Добавляем колонку CategoryName в selectedProducts, если её нет
             if (!selectedProducts.Columns.Contains("CategoryName"))
                 selectedProducts.Columns.Add("CategoryName", typeof(string));
 
-            // Заполняем CategoryName по ProductID
             foreach (DataRow row in selectedProducts.Rows)
             {
                 int productId = (int)row["ProductID"];
@@ -483,11 +492,10 @@ namespace Kursach.main_windows.admin
                 }
                 else
                 {
-                    row["CategoryName"] = string.Empty; // или "Неизвестно"
+                    row["CategoryName"] = string.Empty; 
                 }
             }
 
-            // Теперь применяем скидки по тем же правилам, что и в оригинальном методе
             foreach (DataRow productRow in selectedProducts.Rows)
             {
                 decimal originalPrice = Convert.ToDecimal(productRow["Price"]);

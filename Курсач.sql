@@ -15,6 +15,8 @@ CREATE TABLE Users (
     FOREIGN KEY (RoleID) REFERENCES Roles(RoleID)
 );
 
+select * from Users
+
 CREATE TABLE Warehouses (
     WarehouseID INT PRIMARY KEY IDENTITY(1,1),
     Name NVARCHAR(100) NOT NULL,
